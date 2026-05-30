@@ -2,28 +2,42 @@ cmake_minimum_required(VERSION 3.16)
 
 project(miniCad LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC OFF)
-set(CMAKE_AUTORCC OFF)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(OpenCASCADE REQUIRED)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+        Data/*.cpp
+        Utils/*.cpp
+        View/*.cpp
+        *.h
+        main.cpp
+)
 
-add_executable(miniCad
-    src/main.cpp
-    src/canvas.cpp
-    src/shapes.cpp
+add_executable(
+        miniCad
+        ${SRC_FILES}
 )
 
 target_link_libraries(miniCad PRIVATE ${OpenCASCADE_LIBRARIES})
-target_include_directories(miniCad PRIVATE ${OpenCASCADE_INCLUDE_DIR})
+target_include_directories(miniCad PRIVATE
+        ${OpenCASCADE_INCLUDE_DIR}
+        .
+        View
+        Data
+        Utils
+)
 
 
-target_link_libraries(miniCad PRIVATE Qt5::Widgets)
+target_link_libraries(miniCad PRIVATE
+        Qt5::Widgets
+        Qt5::Core
+)
 
 set_target_properties(miniCad PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_DEBUG   ${CMAKE_BINARY_DIR}/bin/Debug

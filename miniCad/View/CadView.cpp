@@ -1,4 +1,7 @@
 #include "CadView.h"
+#include "Document.h"
+#include "BoxElement.h"
+
 #include <QMouseEvent>
 #include <WNT_Window.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
@@ -8,11 +11,11 @@
 #include <V3d_View.hxx>
 #include <AIS_Shape.hxx>
 #include <QTimer>
+#include <QDebug>
 
-#include "BoxElement.h"
 
 CadView::CadView(QWidget *parent)
-    : QWidget(parent) {
+    : QWidget(parent), m_document(std::make_unique<Document>()) {
     setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_NativeWindow);
@@ -57,8 +60,10 @@ void CadView::InitScene() {
     Handle(AIS_Shape) box = new AIS_Shape(shape);
     mView->SetComputedMode(false);
     mContext->DefaultDrawer()->SetFaceBoundaryDraw(true);
-    auto boxElement = std::make_shared<BoxElement>();
-    m_Elements.insert({box.get(), boxElement});
+    auto boxElement = std::make_unique<BoxElement>();
+    boxElement->SetId(Document::NewElementId());
+    m_ObjectMap.insert({box.get(), boxElement->GetId()});
+    m_document->RegisterElement(std::move(boxElement));
     mContext->Display(box, AIS_Shaded, 0, Standard_True);
 
     mView->FitAll();
@@ -78,8 +83,12 @@ void CadView::PrintSelection() const {
     for (mContext->InitSelected(); mContext->MoreSelected(); mContext->NextSelected()) {
         auto obj = mContext->SelectedInteractive();
         if (!obj.IsNull()) {
-            auto iter = m_Elements.find(obj.get());
-            std::cout << "selected object " << iter->second->GetName().toStdString() << std::endl;
+            const auto iter = m_ObjectMap.find(obj.get());
+            if (const auto element = m_document->FindElement(iter->second)) {
+                qDebug() << "selected object " << element->GetName();
+            } else {
+                qDebug() << "selected  Null!";
+            }
         }
     }
 }

@@ -4,6 +4,8 @@
 #include <Standard_Handle.hxx>
 
 
+struct ElementId;
+class Document;
 class Element;
 class AIS_InteractiveContext;
 class V3d_View;
@@ -45,5 +47,6 @@ private:
     Handle(AIS_InteractiveContext) mContext;
 
     QPoint mLastMousePos;
-    std::unordered_map<void *, std::shared_ptr<Element> > m_Elements;
+    std::unique_ptr<Document> m_document;
+    std::unordered_map<void *, ElementId> m_ObjectMap;
 };

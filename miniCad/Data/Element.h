@@ -5,10 +5,21 @@
 #pragma once
 #include <qstring.h>
 
+#include "Document.h"
+#include "ElementId.h"
+
 
 class Element {
 public:
      Element();
+
+     [[nodiscard]] Document *GetDocument() const;
+
+     void SetDocument(Document *doc);
+
+     [[nodiscard]] ElementId GetId() const;
+
+     void SetId(const ElementId &elementId);
 
      virtual ~Element();
 
@@ -16,6 +27,8 @@ public:
 
 protected:
      QString m_Name;
+     ElementId m_Id;
+     Document *m_Document;
 };
 
 

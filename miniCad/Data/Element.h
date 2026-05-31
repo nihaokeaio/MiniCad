@@ -17,6 +17,8 @@ public:
 
      void SetDocument(Document *doc);
 
+     void NotifyElementChanged(MessageInfo::ElementChangeFlag flag) const;
+
      [[nodiscard]] ElementId GetId() const;
 
      void SetId(const ElementId &elementId);

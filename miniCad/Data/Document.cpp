@@ -7,9 +7,13 @@
 #include "Element.h"
 
 void Document::RegisterElement(std::unique_ptr<Element> &&element) {
-    assert(element->GetId()!=ElementId::InvalidId);
+    if (element->GetId() == ElementId::InvalidId) {
+        element->SetId(NewElementId());
+    }
+    auto rawElement = element.get();
     element->SetDocument(this);
     m_Elements.insert(std::make_pair(element->GetId(), std::move(element)));
+    rawElement->NotifyElementChanged(MessageInfo::Add);
 }
 
 void Document::UnregisterElement(const ElementId &elementId) {
@@ -28,4 +32,30 @@ Element *Document::FindElement(const ElementId &elementId) {
         return iter->second.get();
     }
     return nullptr;
+}
+
+void Document::NotifyElementAdded(const ElementId &elementId) const {
+    const auto payload = std::make_shared<MessageInfo::ElementChangePayLoad>();;
+    payload->changeType = MessageInfo::ElementChangeFlag::Add;
+    payload->elementId = elementId;
+    m_NotifyElementChanged(payload);
+}
+
+void Document::NotifyElementRemoved(const ElementId &elementId) const {
+    const auto payload = std::make_shared<MessageInfo::ElementChangePayLoad>();;
+    payload->changeType = MessageInfo::ElementChangeFlag::Remove;
+    payload->elementId = elementId;
+    m_NotifyElementChanged(payload);
+}
+
+void Document::NotifyElementUpdated(const ElementId &elementId) const {
+    const auto payload = std::make_shared<MessageInfo::ElementChangePayLoad>();
+    payload->changeType = MessageInfo::ElementChangeFlag::Update;
+    payload->elementId = elementId;
+    m_NotifyElementChanged(payload);
+}
+
+void Document::SetNotifyElementChangedCallback(
+    const std::function<void(std::shared_ptr<MessageInfo::ElementChangePayLoad>)> &callback) {
+    m_NotifyElementChanged = callback;
 }

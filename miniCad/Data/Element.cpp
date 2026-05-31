@@ -16,6 +16,20 @@ void Element::SetDocument(Document *doc) {
     m_Document = doc;
 }
 
+void Element::NotifyElementChanged(MessageInfo::ElementChangeFlag flag) const {
+    assert(m_Document != nullptr);
+    switch (flag) {
+        case MessageInfo::ElementChangeFlag::Add:
+            m_Document->NotifyElementAdded(m_Id);
+            break;
+        case MessageInfo::ElementChangeFlag::Remove:
+            m_Document->NotifyElementRemoved(m_Id);
+            break;
+        default:
+            m_Document->NotifyElementUpdated(m_Id);
+    }
+}
+
 ElementId Element::GetId() const {
     return m_Id;
 }

@@ -14,8 +14,12 @@ find_package(OpenCASCADE REQUIRED)
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
         Data/*.cpp
         Utils/*.cpp
-        View/*.cpp
+        Rendering/*.cpp
+        Presentation/*.cpp
+        UI/*.cpp
         *.h
+        AppContext.h
+        AppContext.cpp
         main.cpp
 )
 
@@ -28,9 +32,10 @@ target_link_libraries(miniCad PRIVATE ${OpenCASCADE_LIBRARIES})
 target_include_directories(miniCad PRIVATE
         ${OpenCASCADE_INCLUDE_DIR}
         .
-        View
+        Rendering
         Data
         Utils
+        Presentation
 )
 
 

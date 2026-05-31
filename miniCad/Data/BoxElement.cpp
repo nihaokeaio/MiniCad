@@ -4,6 +4,6 @@
 
 #include "BoxElement.h"
 
-BoxElement::BoxElement() {
+BoxElement::BoxElement() : m_Width(100), m_Height(100), m_Length(100) {
     m_Name = "BoxElement";
 }

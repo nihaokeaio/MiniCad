@@ -3,7 +3,14 @@
 #include <QWidget>
 #include <Standard_Handle.hxx>
 
+#include "Document.h"
+#include "Presentation/SelectionManager.h"
+#include "Presentation/ViewObjectRegistry.h"
 
+
+class SelectionManager;
+class ViewObjectRegistry;
+class DocumentObserver;
 struct ElementId;
 class Document;
 class Element;
@@ -14,7 +21,10 @@ class V3d_Viewer;
 class CadView : public QWidget {
     //Q_OBJECT
 public:
-    explicit CadView(QWidget *parent = nullptr);
+    explicit CadView(Document *doc, ViewObjectRegistry *registry, SelectionManager *selectionManager,
+                     QWidget *parent = nullptr);
+
+    Handle(AIS_InteractiveContext) GetContext();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -39,14 +49,16 @@ protected:
 private:
     void InitViewer();
 
-    void InitScene();
+    void InitScene() const;
 
 private:
-    Handle(V3d_Viewer) mViewer;
-    Handle(V3d_View) mView;
-    Handle(AIS_InteractiveContext) mContext;
+    Handle(V3d_Viewer) m_Viewer;
+    Handle(V3d_View) m_View;
+    Handle(AIS_InteractiveContext) m_Context;
 
-    QPoint mLastMousePos;
-    std::unique_ptr<Document> m_document;
-    std::unordered_map<void *, ElementId> m_ObjectMap;
+    QPoint m_LastMousePos;
+
+    Document *m_document;
+    ViewObjectRegistry *m_Register;
+    SelectionManager *m_SelectionManager;
 };

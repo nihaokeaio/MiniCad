@@ -6,7 +6,11 @@
 #include <AIS_InteractiveContext.hxx>
 #include <memory>
 
+#include "MacroSet.h"
 
+
+class CommandManager;
+class CadController;
 class CadView;
 class ViewAdaptor;
 class ViewObjectRegistry;
@@ -15,18 +19,36 @@ class DocumentObserver;
 class Document;
 
 class AppContext {
-public:
-    AppContext();
-
-    ~AppContext();
+    DECLARE_SINGLETON(AppContext)
 
 public:
+    void Initialize();
+
+public:
+    [[nodiscard]] Document *GetDocument() const;
+
+    [[nodiscard]] SelectionManager *GetSelectManager() const;
+
+    [[nodiscard]] CadView *GetCadView() const;
+
+    [[nodiscard]] ViewAdaptor *GetViewAdaptor() const;
+
+    [[nodiscard]] ViewObjectRegistry *GetViewObjectRegistry() const;
+
+    [[nodiscard]] CommandManager *GetCommandManager() const;
+
+    [[nodiscard]] CadController *GetCadController() const;
+
+private:
     std::unique_ptr<Document> m_Document;
     std::unique_ptr<DocumentObserver> m_DocumentObserver;
     std::unique_ptr<SelectionManager> m_Selection;
     std::unique_ptr<ViewObjectRegistry> m_Registry;
     std::unique_ptr<ViewAdaptor> m_Adaptor;
-    CadView *m_View; ///CadView是一个widget，由外部来持有
+    std::unique_ptr<CommandManager> m_CommandManager;
+    std::unique_ptr<CadController> m_CadController;
+
+    CadView *m_View = nullptr;
 };
 
 

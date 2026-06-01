@@ -17,6 +17,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
         Rendering/*.cpp
         Presentation/*.cpp
         UI/*.cpp
+        Controller/*.cpp
         *.h
         AppContext.h
         AppContext.cpp

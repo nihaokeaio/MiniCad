@@ -18,7 +18,7 @@ class Document {
 public:
     void RegisterElement(std::unique_ptr<Element> &&element);
 
-    void UnregisterElement(const ElementId &elementId);
+    std::unique_ptr<Element> UnregisterElement(const ElementId &elementId);
 
     static ElementId NewElementId();
 

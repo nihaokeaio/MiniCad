@@ -13,9 +13,6 @@ public:
     MainWindow(AppContext *context);
 
 private:
-    void CreateBox() const;
-
-private:
     AppContext *m_Context;
 };
 

@@ -1,33 +1,26 @@
 //
-// Created by ZQD on 2026/5/30.
+// Created by ZQD on 2026/6/3.
 //
 
 #pragma once
-
 #include "Element.h"
 
 
-class BoxElement : public Element {
+class CylinderElement : public Element {
 public:
-    BoxElement();
+    CylinderElement();
 
     [[nodiscard]] TopoDS_Shape BuildShape() const override;
 
-    [[nodiscard]] double GetWidth() const {
+    [[nodiscard]] double GetRadius() const {
         double value = 0;
-        GetProperty("Width", value);
+        GetProperty("Radius", value);
         return value;
     }
 
     [[nodiscard]] double GetHeight() const {
         double value = 0;
         GetProperty("Height", value);
-        return value;
-    }
-
-    [[nodiscard]] double GetLength() const {
-        double value = 0;
-        GetProperty("Length", value);
         return value;
     }
 };

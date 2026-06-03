@@ -1,29 +1,29 @@
 //
-// Created by ZQD on 2026/6/1.
+// Created by ZQD on 2026/6/3.
 //
 
 #pragma once
+
 #include <memory>
 
 #include "Command.h"
 #include "ElementId.h"
+#include "ElementType.h"
 
 class Element;
 
-
-class CreateBoxCommand final : public Command {
+class CreateElementCommand final : public Command {
 public:
-    explicit CreateBoxCommand(Document *document);
+    CreateElementCommand(Document *document, ElementType elementType);
 
-    ~CreateBoxCommand() override;
+    ~CreateElementCommand() override;
 
     void Execute() override;
 
     void Undo() override;
 
 private:
+    ElementType m_ElementType;
     ElementId m_ElementId{ElementId::InvalidId};
     std::unique_ptr<Element> m_RemovedElement;
 };
-
-

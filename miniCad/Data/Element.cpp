@@ -43,3 +43,18 @@ Element::~Element() = default;
 QString Element::GetName() {
     return m_Name;
 }
+
+PropertySet &Element::Properties() {
+    return m_Properties;
+}
+
+const PropertySet &Element::Properties() const {
+    return m_Properties;
+}
+
+void Element::SetProperty(const std::string &key, const PropertyValue &value) {
+    m_Properties.Set(key, value);
+    if (m_Document != nullptr) {
+        NotifyElementChanged(MessageInfo::ElementChangeFlag::Update);
+    }
+}

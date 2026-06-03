@@ -4,6 +4,15 @@
 
 #include "BoxElement.h"
 
-BoxElement::BoxElement() : m_Width(100), m_Height(100), m_Length(100) {
+#include <BRepPrimAPI_MakeBox.hxx>
+
+BoxElement::BoxElement() {
     m_Name = "BoxElement";
+    m_Properties.SetT("Width", 100.0);
+    m_Properties.SetT("Height", 100.0);
+    m_Properties.SetT("Length", 100.0);
+}
+
+TopoDS_Shape BoxElement::BuildShape() const {
+    return BRepPrimAPI_MakeBox(GetLength(), GetWidth(), GetHeight());
 }

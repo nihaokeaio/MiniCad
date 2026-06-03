@@ -13,6 +13,8 @@ public:
 
     void CreateBox() const;
 
+    void CreateCylinder() const;
+
     void Undo() const;
 
     void Redo() const;

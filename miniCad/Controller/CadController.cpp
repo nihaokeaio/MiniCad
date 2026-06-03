@@ -7,7 +7,7 @@
 #include <cassert>
 
 #include "CommandManager.h"
-#include "CreateBoxCommand.h"
+#include "CreateElementCommand.h"
 #include "Document.h"
 
 CadController::CadController(Document *document, CommandManager *commandManager)
@@ -17,7 +17,11 @@ CadController::CadController(Document *document, CommandManager *commandManager)
 }
 
 void CadController::CreateBox() const {
-    m_CommandManager->ExecuteCommand(std::make_unique<CreateBoxCommand>(m_Document));
+    m_CommandManager->ExecuteCommand(std::make_unique<CreateElementCommand>(m_Document, ElementType::Box));
+}
+
+void CadController::CreateCylinder() const {
+    m_CommandManager->ExecuteCommand(std::make_unique<CreateElementCommand>(m_Document, ElementType::Cylinder));
 }
 
 void CadController::Undo() const {

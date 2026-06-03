@@ -3,10 +3,12 @@
 //
 
 #pragma once
+#include <TopoDS_Shape.hxx>
 #include <qstring.h>
 
 #include "Document.h"
 #include "ElementId.h"
+#include "Property/PropertySet.h"
 
 
 class Element {
@@ -27,10 +29,34 @@ public:
 
      QString GetName();
 
+     [[nodiscard]] virtual TopoDS_Shape BuildShape() const = 0;
+
+     [[nodiscard]] PropertySet &Properties();
+
+     [[nodiscard]] const PropertySet &Properties() const;
+
+     void SetProperty(const std::string &key, const PropertyValue &value);
+
+     template<typename T>
+     void SetPropertyT(const std::string &key, const T &value);
+
+     template<typename T>
+     bool GetProperty(const std::string &key, T &value) const;
+
 protected:
      QString m_Name;
      ElementId m_Id;
      Document *m_Document;
+     PropertySet m_Properties;
 };
 
+template<typename T>
+void Element::SetPropertyT(const std::string &key, const T &value) {
+     SetProperty(key, PropertyValue(value));
+}
+
+template<typename T>
+bool Element::GetProperty(const std::string &key, T &value) const {
+     return m_Properties.Get(key, value);
+}
 

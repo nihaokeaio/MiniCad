@@ -14,12 +14,16 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     auto toolbar = addToolBar("Main Toolbar");
     auto action = toolbar->addAction("Print Selection");
     auto createBox = toolbar->addAction("Box");
+    auto createCylinder = toolbar->addAction("Cylinder");
     auto undo = toolbar->addAction("Undo");
     auto redo = toolbar->addAction("Redo");
 
     QObject::connect(action, &QAction::triggered, m_Context->GetCadView(), &CadView::PrintSelection);
     QObject::connect(createBox, &QAction::triggered, this, [context]() {
         context->GetCadController()->CreateBox();
+    });
+    QObject::connect(createCylinder, &QAction::triggered, this, [context]() {
+        context->GetCadController()->CreateCylinder();
     });
     QObject::connect(undo, &QAction::triggered, this, [context]() {
         context->GetCadController()->Undo();

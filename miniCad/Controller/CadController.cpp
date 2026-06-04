@@ -6,6 +6,7 @@
 
 #include <cassert>
 
+#include "ChangePropertyCommand.h"
 #include "CommandManager.h"
 #include "CreateElementCommand.h"
 #include "Document.h"
@@ -22,6 +23,10 @@ void CadController::CreateBox() const {
 
 void CadController::CreateCylinder() const {
     m_CommandManager->ExecuteCommand(std::make_unique<CreateElementCommand>(m_Document, ElementType::Cylinder));
+}
+
+void CadController::ChangeElementProperty(ElementId id, const std::string &key, const PropertyValue &value) {
+    m_CommandManager->ExecuteCommand(std::make_unique<ChangePropertyCommand>(m_Document, id, key, value));
 }
 
 void CadController::Undo() const {

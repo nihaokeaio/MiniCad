@@ -16,6 +16,10 @@ public:
 
     bool IsSelected(ElementId id) const;
 
+    bool HasSelection() const;
+
+    ElementId GetSingleSelected() const;
+
     const std::unordered_set<ElementId> &Selected() const;
 
 private:

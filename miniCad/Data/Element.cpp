@@ -58,3 +58,9 @@ void Element::SetProperty(const std::string &key, const PropertyValue &value) {
         NotifyElementChanged(MessageInfo::ElementChangeFlag::Update);
     }
 }
+
+void Element::GetProperty(const std::string &key, PropertyValue &value) const {
+    if (m_Properties.Exists(key)) {
+        value = m_Properties.Get(key);
+    }
+}

@@ -103,7 +103,7 @@ void CadView::resizeEvent(QResizeEvent *) {
 void CadView::mousePressEvent(
     QMouseEvent *event) {
     m_LastMousePos = event->pos();
-    if (event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::RightButton) {
         m_View->StartRotation(event->x(), event->y());
     }
     QWidget::mousePressEvent(event);
@@ -115,11 +115,21 @@ void CadView::mouseReleaseEvent(QMouseEvent *event) {
 
     if (!m_Context->HasDetected()) {
         m_Context->ClearSelected(Standard_True);
+        m_SelectionManager->Clear();
         return;
     }
-    m_Context->SelectDetected();
 
+    m_Context->SelectDetected();
+    m_Context->InitSelected();
+    if (!m_Context->MoreSelected()) {
+        m_SelectionManager->Clear();
+        return;
+    }
     const auto ais = m_Context->SelectedInteractive();
+    if (ais.IsNull()) {
+        m_SelectionManager->Clear();
+        return;
+    }
 
     const ElementId id = m_Register->FindElement(ais);
     m_SelectionManager->SetSelected(id);
@@ -129,7 +139,7 @@ void CadView::mouseMoveEvent(
     QMouseEvent *event) {
     QPoint delta = event->pos() - m_LastMousePos;
 
-    if (event->buttons() & Qt::LeftButton) {
+    if (event->buttons() & Qt::RightButton) {
         m_View->Rotation(event->x(), event->y());
     }
 

@@ -37,6 +37,8 @@ public:
 
      void SetProperty(const std::string &key, const PropertyValue &value);
 
+     void GetProperty(const std::string &key, PropertyValue &value) const;
+
      template<typename T>
      void SetPropertyT(const std::string &key, const T &value);
 

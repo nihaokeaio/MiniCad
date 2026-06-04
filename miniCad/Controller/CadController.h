@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include "ElementId.h"
+#include "Property/PropertyValue.h"
 
 class CommandManager;
 class Document;
@@ -14,6 +16,8 @@ public:
     void CreateBox() const;
 
     void CreateCylinder() const;
+
+    void ChangeElementProperty(ElementId id, const std::string &key, const PropertyValue &value);
 
     void Undo() const;
 

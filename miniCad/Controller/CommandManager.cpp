@@ -32,6 +32,6 @@ void CommandManager::Redo() {
 
     auto command = std::move(m_RedoStack.back());
     m_RedoStack.pop_back();
-    command->Execute();
+    command->Redo();
     m_UndoStack.push_back(std::move(command));
 }

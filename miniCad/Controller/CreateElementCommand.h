@@ -22,6 +22,8 @@ public:
 
     void Undo() override;
 
+    void Redo() override;
+
 private:
     ElementType m_ElementType;
     ElementId m_ElementId{ElementId::InvalidId};

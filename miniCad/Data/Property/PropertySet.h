@@ -25,13 +25,13 @@ public:
     template<typename T>
     bool Get(const std::string &key, T &value) const;
 
-    PropertyValue Get(const std::string &key) const;
+    [[nodiscard]] PropertyValue Get(const std::string &key) const;
 
     void Remove(const std::string &key);
 
     void Clear();
 
-    bool Exists(const std::string &key) const;
+    [[nodiscard]] bool Exists(const std::string &key) const;
 
 private:
     std::unordered_map<std::string, PropertyValue> m_Properties;

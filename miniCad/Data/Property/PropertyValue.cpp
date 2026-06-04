@@ -41,8 +41,8 @@ std::string PropertyValue::GetTypeName() const {
         return "empty";
     }
 
-    return std::visit([](const auto &value) -> std::string {
-        using T = std::decay_t<decltype(value)>;
+    return std::visit([]<typename T0>([[maybe_unused]] const T0 &value) -> std::string {
+        using T = std::decay_t<T0>;
         if constexpr (std::is_same_v<T, bool>) {
             return "bool";
         } else if constexpr (std::is_same_v<T, int>) {

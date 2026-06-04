@@ -35,3 +35,7 @@ void CreateElementCommand::Undo() {
         m_RemovedElement = m_Document->UnregisterElement(m_ElementId);
     }
 }
+
+void CreateElementCommand::Redo() {
+    Execute();
+}

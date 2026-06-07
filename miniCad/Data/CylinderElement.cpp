@@ -12,5 +12,17 @@ CylinderElement::CylinderElement() {
 }
 
 TopoDS_Shape CylinderElement::BuildShape() const {
-    return ApplyPlacement(BRepPrimAPI_MakeCylinder(GetRadius(), GetHeight()));
+    return BRepPrimAPI_MakeCylinder(GetRadius(), GetHeight());
+}
+
+double CylinderElement::GetRadius() const {
+    double value = 0.0;
+    GetProperty("Radius", value);
+    return value;
+}
+
+double CylinderElement::GetHeight() const {
+    double value = 0.0;
+    GetProperty("Height", value);
+    return value;
 }

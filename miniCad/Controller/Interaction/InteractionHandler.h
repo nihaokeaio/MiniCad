@@ -8,27 +8,26 @@ struct InteractionContext;
 class QWheelEvent;
 class QMouseEvent;
 
+enum class InteractionPostAction {
+    None,
+    RestoreSelectionHandler
+};
+
 class InteractionHandler {
 public:
     explicit InteractionHandler(InteractionContext *context);
 
     virtual ~InteractionHandler() = default;
 
-    virtual bool MousePress(QMouseEvent *event) {
-        return false;
-    }
+    virtual bool MousePress(QMouseEvent *event);
 
-    virtual bool MouseRelease(QMouseEvent *event) {
-        return false;
-    }
+    virtual InteractionPostAction OnMousePressAfter(QMouseEvent *event, bool handled);
 
-    virtual bool MouseMove(QMouseEvent *event) {
-        return false;
-    }
+    virtual bool MouseRelease(QMouseEvent *event);
 
-    virtual bool Wheel(QWheelEvent *event) {
-        return false;
-    }
+    virtual bool MouseMove(QMouseEvent *event);
+
+    virtual bool Wheel(QWheelEvent *event);
 
 protected:
     InteractionContext *m_Context = nullptr;

@@ -6,3 +6,23 @@
 
 InteractionHandler::InteractionHandler(InteractionContext *context) : m_Context(context) {
 }
+
+bool InteractionHandler::MousePress(QMouseEvent *) {
+    return false;
+}
+
+InteractionPostAction InteractionHandler::OnMousePressAfter(QMouseEvent *, bool) {
+    return InteractionPostAction::None;
+}
+
+bool InteractionHandler::MouseRelease(QMouseEvent *) {
+    return false;
+}
+
+bool InteractionHandler::MouseMove(QMouseEvent *) {
+    return false;
+}
+
+bool InteractionHandler::Wheel(QWheelEvent *) {
+    return false;
+}

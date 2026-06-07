@@ -13,21 +13,9 @@ public:
 
     [[nodiscard]] TopoDS_Shape BuildShape() const override;
 
-    [[nodiscard]] double GetWidth() const {
-        double value = 0;
-        GetProperty("Width", value);
-        return value;
-    }
+    [[nodiscard]] double GetWidth() const;
 
-    [[nodiscard]] double GetHeight() const {
-        double value = 0;
-        GetProperty("Height", value);
-        return value;
-    }
+    [[nodiscard]] double GetHeight() const;
 
-    [[nodiscard]] double GetLength() const {
-        double value = 0;
-        GetProperty("Length", value);
-        return value;
-    }
+    [[nodiscard]] double GetLength() const;
 };

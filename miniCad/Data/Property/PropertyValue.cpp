@@ -32,6 +32,14 @@ PropertyValue::PropertyValue(const std::vector<double> &value) {
     SetValue(value);
 }
 
+PropertyValue::PropertyValue(const GeometryTypes::Point3D &value) {
+    SetValue(value);
+}
+
+PropertyValue::PropertyValue(const GeometryTypes::RTransform &value) {
+    SetValue(value);
+}
+
 bool PropertyValue::HasValue() const {
     return m_Value.has_value();
 }
@@ -55,6 +63,10 @@ std::string PropertyValue::GetTypeName() const {
             return "vector<double>";
         } else if constexpr (std::is_same_v<T, std::string>) {
             return "string";
+        } else if constexpr (std::is_same_v<T, GeometryTypes::Point3D>) {
+            return "Point3D";
+        } else if constexpr (std::is_same_v<T, GeometryTypes::RTransform>) {
+            return "RTransform";
         } else {
             return "unknown";
         }

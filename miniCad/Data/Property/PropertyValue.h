@@ -7,13 +7,17 @@
 #include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
+
+#include "GeometryTypes.h"
 
 
 class PropertyValue {
 public:
-    using TV = std::variant<bool, int, double, std::vector<int>, std::vector<double>, std::string>;
+    using TV = std::variant<bool, int, double, std::vector<int>, std::vector<double>, std::string,
+        GeometryTypes::Point3D, GeometryTypes::RTransform>;
 
     explicit PropertyValue();
 
@@ -29,6 +33,10 @@ public:
 
     explicit PropertyValue(const std::vector<double> &value);
 
+    explicit PropertyValue(const GeometryTypes::Point3D &value);
+
+    explicit PropertyValue(const GeometryTypes::RTransform &value);
+
     ~PropertyValue() = default;
 
     [[nodiscard]] bool HasValue() const;
@@ -36,7 +44,7 @@ public:
 public:
     template<typename T>
     T GetValue() const {
-        return std::get<T>(m_Value);
+        return std::get<T>(m_Value.value());
     }
 
     template<typename T>

@@ -18,6 +18,8 @@ public:
 
     std::vector<Handle(AIS_InteractiveObject) > FindElementAisObjects(ElementId id);
 
+    Handle(AIS_InteractiveObject) FindFirstElementAisObject(ElementId id);
+
 private:
     std::unordered_map<void *, ElementId> m_AisObjectMap;
     std::unordered_map<ElementId, std::vector<Handle(AIS_InteractiveObject) > > m_ElementToObjects;;

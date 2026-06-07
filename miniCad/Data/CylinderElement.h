@@ -12,15 +12,7 @@ public:
 
     [[nodiscard]] TopoDS_Shape BuildShape() const override;
 
-    [[nodiscard]] double GetRadius() const {
-        double value = 0;
-        GetProperty("Radius", value);
-        return value;
-    }
+    [[nodiscard]] double GetRadius() const;
 
-    [[nodiscard]] double GetHeight() const {
-        double value = 0;
-        GetProperty("Height", value);
-        return value;
-    }
+    [[nodiscard]] double GetHeight() const;
 };

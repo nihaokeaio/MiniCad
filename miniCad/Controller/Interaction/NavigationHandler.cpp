@@ -37,9 +37,6 @@ bool NavigationHandler::MouseMove(QMouseEvent *event) {
         handled = true;
     }
 
-    m_LastMousePos = event->pos();
-
-    m_Context->aisContext->MoveTo(event->x(), event->y(), m_Context->view, Standard_True);
     return handled;
 }
 

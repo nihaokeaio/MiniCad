@@ -42,3 +42,11 @@ std::vector<opencascade::handle<AIS_InteractiveObject> > ViewObjectRegistry::Fin
     }
     return {};
 }
+
+opencascade::handle<AIS_InteractiveObject> ViewObjectRegistry::FindFirstElementAisObject(ElementId id) {
+    assert(id!=ElementId::InvalidId);
+    if (const auto iter = m_ElementToObjects.find(id); iter != m_ElementToObjects.end() && !iter->second.empty()) {
+        return iter->second.front();
+    }
+    return nullptr;
+}

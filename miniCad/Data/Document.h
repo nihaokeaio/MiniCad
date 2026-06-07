@@ -31,7 +31,8 @@ public:
 
     void NotifyElementRemoved(const ElementId &elementId) const;
 
-    void NotifyElementUpdated(const ElementId &elementId) const;
+    void NotifyElementUpdated(const ElementId &elementId,
+                              MessageInfo::ElementUpdateHint hint = MessageInfo::ElementUpdateHint::All) const;
 
     void SetNotifyElementChangedCallback(
         const std::function<void(std::shared_ptr<MessageInfo::ElementChangePayLoad>)> &callback);

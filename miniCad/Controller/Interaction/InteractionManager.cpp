@@ -6,7 +6,7 @@
 
 #include <QMouseEvent>
 
-#include "../Tools/CreateElementTool.h"
+#include "Tools/CreateElementTool.h"
 #include "NavigationHandler.h"
 #include "SelectionHandler.h"
 
@@ -30,20 +30,21 @@ void InteractionManager::SetSelectionHandler() {
     m_ActiveHandler = std::make_unique<SelectionHandler>(m_Context.get());
 }
 
-void InteractionManager::SetCreateElementTool(ElementType elementType) {
-    m_ActiveHandler = std::make_unique<CreateElementTool>(m_Context.get(), elementType);
+void InteractionManager::SetCreateElementTool(ElementType elementType, bool continuous) {
+    m_ActiveHandler = std::make_unique<CreateElementTool>(m_Context.get(), elementType, continuous);
 }
 
-void InteractionManager::MousePress(QMouseEvent *event) const {
+void InteractionManager::MousePress(QMouseEvent *event) {
     if (DispatchGlobalMousePress(event)) {
         return;
     }
-    if (m_ActiveHandler) {
-        m_ActiveHandler->MousePress(event);
-    }
+    if (!m_ActiveHandler)
+        return;
+    const bool handled = m_ActiveHandler->MousePress(event);
+    ApplyPostAction(m_ActiveHandler->OnMousePressAfter(event, handled));
 }
 
-void InteractionManager::MouseRelease(QMouseEvent *event) const {
+void InteractionManager::MouseRelease(QMouseEvent *event) {
     if (DispatchGlobalMouseRelease(event)) {
         return;
     }
@@ -52,7 +53,7 @@ void InteractionManager::MouseRelease(QMouseEvent *event) const {
     }
 }
 
-void InteractionManager::MouseMove(QMouseEvent *event) const {
+void InteractionManager::MouseMove(QMouseEvent *event) {
     if (DispatchGlobalMouseMove(event)) {
         return;
     }
@@ -61,7 +62,7 @@ void InteractionManager::MouseMove(QMouseEvent *event) const {
     }
 }
 
-void InteractionManager::Wheel(QWheelEvent *event) const {
+void InteractionManager::Wheel(QWheelEvent *event) {
     if (DispatchGlobalWheel(event)) {
         return;
     }
@@ -104,4 +105,15 @@ bool InteractionManager::DispatchGlobalWheel(QWheelEvent *event) const {
         }
     }
     return false;
+}
+
+void InteractionManager::ApplyPostAction(InteractionPostAction action) {
+    switch (action) {
+        case InteractionPostAction::RestoreSelectionHandler:
+            SetSelectionHandler();
+            break;
+        case InteractionPostAction::None:
+        default:
+            break;
+    }
 }

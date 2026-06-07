@@ -5,6 +5,7 @@
 #include "ViewAdaptor.h"
 
 #include <AIS_InteractiveContext.hxx>
+#include <AIS_InteractiveObject.hxx>
 #include <AIS_Shape.hxx>
 
 #include "Element.h"
@@ -24,6 +25,7 @@ void ViewAdaptor::AddElement(ElementId elementId) const {
         return;
     }
     Handle(AIS_Shape) ais = new AIS_Shape(shape);
+    ais->SetLocalTransformation(element->GetPlacementTransform());
     m_Context->Display(ais, AIS_Shaded, 0, Standard_True);
     m_Registry->Register(ais, elementId);
 }
@@ -48,8 +50,18 @@ void ViewAdaptor::UpdateElement(const std::shared_ptr<MessageInfo::ElementChange
             break;
         }
         case MessageInfo::ElementChangeFlag::Update: {
-            RemoveElement(payload->elementId);
-            AddElement(payload->elementId);
+            if (payload->updateHint == MessageInfo::ElementUpdateHint::Transform) {
+                const auto element = m_Document->FindElement(payload->elementId);
+                const auto aisObject = m_Registry->FindFirstElementAisObject(payload->elementId);
+                if (element && !aisObject.IsNull()) {
+                    aisObject->SetLocalTransformation(element->GetPlacementTransform());
+                    m_Context->Redisplay(aisObject, Standard_False);
+                    m_Context->UpdateCurrentViewer();
+                }
+            } else {
+                RemoveElement(payload->elementId);
+                AddElement(payload->elementId);
+            }
             break;
         }
         default: {

@@ -7,6 +7,7 @@
 #include <qevent.h>
 #include "CadView.h"
 #include "Document.h"
+#include "PreviewAdaptor.h"
 #include "Controller/CadController.h"
 #include "Controller/Command/CommandManager.h"
 #include "Controller/Interaction/InteractionManager.h"
@@ -26,10 +27,11 @@ void AppContext::Initialize() {
     m_Registry = std::make_unique<ViewObjectRegistry>();
     m_View = new CadView(m_Document.get(), m_Registry.get(), m_Selection.get());
     m_Adaptor = std::make_unique<ViewAdaptor>(m_View->GetContext(), m_Registry.get(), m_Document.get());
+    m_PreviewAdaptor = std::make_unique<PreviewAdaptor>(m_View->GetContext());
     m_DocumentObserver = std::make_unique<DocumentObserver>(m_Document.get(), m_Adaptor.get());
     m_CommandManager = std::make_unique<CommandManager>();
     m_CadController = std::make_unique<CadController>(m_Document.get(), m_CommandManager.get());
-    m_PreviewManager = std::make_unique<PreviewManager>();
+    m_PreviewManager = std::make_unique<PreviewManager>(m_PreviewAdaptor.get());
     m_InteractionManager = std::make_unique<InteractionManager>(std::make_unique<InteractionContext>(InteractionContext{
         m_View->GetContext(),
         m_View->GetView(),

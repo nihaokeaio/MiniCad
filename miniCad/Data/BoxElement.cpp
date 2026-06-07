@@ -14,5 +14,23 @@ BoxElement::BoxElement() {
 }
 
 TopoDS_Shape BoxElement::BuildShape() const {
-    return ApplyPlacement(BRepPrimAPI_MakeBox(GetLength(), GetWidth(), GetHeight()));
+    return BRepPrimAPI_MakeBox(GetLength(), GetWidth(), GetHeight());
+}
+
+double BoxElement::GetWidth() const {
+    double value = 0.0;
+    GetProperty("Width", value);
+    return value;
+}
+
+double BoxElement::GetHeight() const {
+    double value = 0.0;
+    GetProperty("Height", value);
+    return value;
+}
+
+double BoxElement::GetLength() const {
+    double value = 0.0;
+    GetProperty("Length", value);
+    return value;
 }

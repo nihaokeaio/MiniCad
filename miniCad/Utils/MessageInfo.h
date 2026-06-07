@@ -14,10 +14,18 @@ namespace MessageInfo {
         Update
     };
 
+    enum class ElementUpdateHint:uint8_t {
+        All,
+        Geometry,
+        Transform,
+        Property
+    };
+
     inline std::string ElementChange("ElementChange");
 
     struct ElementChangePayLoad {
         ElementChangeFlag changeType = Add;
+        ElementUpdateHint updateHint = ElementUpdateHint::All;
         ElementId elementId{ElementId::InvalidId};
     };
 };

@@ -8,17 +8,22 @@
 
 #include "../ElementCreateParams.h"
 
+class PreviewAdaptor;
+
 class PreviewManager {
 public:
+    explicit PreviewManager(PreviewAdaptor *adaptor);
+
     void BeginElementPreview(const ElementCreateParams &params);
 
-    void UpdateElementPreviewPosition(const std::vector<double> &position);
+    void UpdateElementPreview(const ElementCreateParams &params) const;
 
-    void Clear();
+    void ExitPreviewState();
 
-    [[nodiscard]] bool HasPreview() const;
+    [[nodiscard]] bool IsPreviewState() const;
 
 private:
-    bool m_HasPreview = false;
-    ElementCreateParams m_CurrentParams{ElementType::Box, {}};
+    bool m_IsPreviewState = false;
+    PreviewAdaptor *m_Adaptor = nullptr;
+    ElementCreateParams m_Params{ElementType::Box, {}};
 };

@@ -4,11 +4,12 @@
 
 #pragma once
 #include <TopoDS_Shape.hxx>
+#include <gp_Trsf.hxx>
 #include <qstring.h>
-#include <vector>
 
 #include "Document.h"
 #include "ElementId.h"
+#include "GeometryTypes.h"
 #include "Property/PropertySet.h"
 
 
@@ -32,7 +33,9 @@ public:
 
      [[nodiscard]] virtual TopoDS_Shape BuildShape() const = 0;
 
-     [[nodiscard]] std::vector<double> GetPosition() const;
+     [[nodiscard]] GeometryTypes::Point3D GetPosition() const;
+
+     [[nodiscard]] gp_Trsf GetPlacementTransform() const;
 
      [[nodiscard]] TopoDS_Shape ApplyPlacement(const TopoDS_Shape &shape) const;
 
@@ -49,6 +52,9 @@ public:
 
      template<typename T>
      bool GetProperty(const std::string &key, T &value) const;
+
+protected:
+     virtual MessageInfo::ElementUpdateHint OnSetProperty(const std::string &key, const PropertyValue &value);
 
 protected:
      QString m_Name;

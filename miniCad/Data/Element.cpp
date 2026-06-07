@@ -10,7 +10,7 @@
 
 Element::Element() : m_Id(ElementId::InvalidId), m_Document(nullptr) {
     m_Name = "Element";
-    m_Properties.SetT("Position", std::vector<double>{0.0, 0.0, 0.0});
+    m_Properties.SetT("Position", GeometryTypes::Point3D(0.0, 0.0, 0.0));
 }
 
 Document *Element::GetDocument() const {
@@ -59,8 +59,9 @@ const PropertySet &Element::Properties() const {
 
 void Element::SetProperty(const std::string &key, const PropertyValue &value) {
     m_Properties.Set(key, value);
+    const auto hint = OnSetProperty(key, value);
     if (m_Document != nullptr) {
-        NotifyElementChanged(MessageInfo::ElementChangeFlag::Update);
+        m_Document->NotifyElementUpdated(m_Id, hint);
     }
 }
 
@@ -70,22 +71,35 @@ void Element::GetProperty(const std::string &key, PropertyValue &value) const {
     }
 }
 
-std::vector<double> Element::GetPosition() const {
-    std::vector<double> position{0.0, 0.0, 0.0};
+GeometryTypes::Point3D Element::GetPosition() const {
+    GeometryTypes::Point3D position(0.0, 0.0, 0.0);
     GetProperty("Position", position);
-    if (position.size() != 3) {
-        return {0.0, 0.0, 0.0};
-    }
     return position;
 }
 
 TopoDS_Shape Element::ApplyPlacement(const TopoDS_Shape &shape) const {
-    const auto position = GetPosition();
-    if (position[0] == 0.0 && position[1] == 0.0 && position[2] == 0.0) {
+    const auto transform = GetPlacementTransform();
+    if (transform.Form() == gp_Identity) {
         return shape;
     }
 
-    gp_Trsf transform;
-    transform.SetTranslation(gp_Vec(position[0], position[1], position[2]));
     return BRepBuilderAPI_Transform(shape, transform).Shape();
+}
+
+gp_Trsf Element::GetPlacementTransform() const {
+    const auto position = GetPosition();
+    gp_Trsf transform;
+    if (position.X() == 0.0 && position.Y() == 0.0 && position.Z() == 0.0) {
+        return transform;
+    }
+
+    transform.SetTranslation(gp_Vec(position));
+    return transform;
+}
+
+MessageInfo::ElementUpdateHint Element::OnSetProperty(const std::string &key, const PropertyValue &) {
+    if (key == "Position") {
+        return MessageInfo::ElementUpdateHint::Transform;
+    }
+    return MessageInfo::ElementUpdateHint::Geometry;
 }

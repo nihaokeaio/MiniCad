@@ -57,9 +57,10 @@ void Document::NotifyElementRemoved(const ElementId &elementId) const {
     }
 }
 
-void Document::NotifyElementUpdated(const ElementId &elementId) const {
+void Document::NotifyElementUpdated(const ElementId &elementId, MessageInfo::ElementUpdateHint hint) const {
     const auto payload = std::make_shared<MessageInfo::ElementChangePayLoad>();
     payload->changeType = MessageInfo::ElementChangeFlag::Update;
+    payload->updateHint = hint;
     payload->elementId = elementId;
     if (m_NotifyElementChanged) {
         m_NotifyElementChanged(payload);

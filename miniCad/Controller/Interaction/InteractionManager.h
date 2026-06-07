@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "ElementType.h"
+#include "InteractionHandler.h"
 
-class InteractionHandler;
 class AIS_InteractiveContext;
 class V3d_View;
 class Document;
@@ -45,16 +45,16 @@ public:
 
     void SetSelectionHandler();
 
-    void SetCreateElementTool(ElementType elementType);
+    void SetCreateElementTool(ElementType elementType, bool continuous = false);
 
 public:
-    void MousePress(QMouseEvent *event) const;
+    void MousePress(QMouseEvent *event);
 
-    void MouseRelease(QMouseEvent *event) const;
+    void MouseRelease(QMouseEvent *event);
 
-    void MouseMove(QMouseEvent *event) const;
+    void MouseMove(QMouseEvent *event);
 
-    void Wheel(QWheelEvent *event) const;
+    void Wheel(QWheelEvent *event);
 
 private:
     bool DispatchGlobalMousePress(QMouseEvent *event) const;
@@ -64,6 +64,8 @@ private:
     bool DispatchGlobalMouseMove(QMouseEvent *event) const;
 
     bool DispatchGlobalWheel(QWheelEvent *event) const;
+
+    void ApplyPostAction(InteractionPostAction action);
 
 private:
     std::unique_ptr<InteractionContext> m_Context;

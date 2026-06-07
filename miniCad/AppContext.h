@@ -9,8 +9,10 @@
 #include "MacroSet.h"
 
 
+class InteractionManager;
 class CommandManager;
 class CadController;
+class PreviewManager;
 class CadView;
 class ViewAdaptor;
 class ViewObjectRegistry;
@@ -39,6 +41,10 @@ public:
 
     [[nodiscard]] CadController *GetCadController() const;
 
+    [[nodiscard]] InteractionManager *GetInteractionManager() const;
+
+    [[nodiscard]] PreviewManager *GetPreviewManager() const;
+
 private:
     std::unique_ptr<Document> m_Document;
     std::unique_ptr<DocumentObserver> m_DocumentObserver;
@@ -46,6 +52,8 @@ private:
     std::unique_ptr<ViewObjectRegistry> m_Registry;
     std::unique_ptr<ViewAdaptor> m_Adaptor;
     std::unique_ptr<CommandManager> m_CommandManager;
+    std::unique_ptr<PreviewManager> m_PreviewManager;
+    std::unique_ptr<InteractionManager> m_InteractionManager;
     std::unique_ptr<CadController> m_CadController;
 
     CadView *m_View = nullptr;

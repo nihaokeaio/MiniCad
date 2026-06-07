@@ -8,13 +8,13 @@
 
 #include "Command.h"
 #include "ElementId.h"
-#include "ElementType.h"
+#include "../ElementCreateParams.h"
 
 class Element;
 
 class CreateElementCommand final : public Command {
 public:
-    CreateElementCommand(Document *document, ElementType elementType);
+    CreateElementCommand(Document *document, ElementCreateParams params);
 
     ~CreateElementCommand() override;
 
@@ -25,7 +25,7 @@ public:
     void Redo() override;
 
 private:
-    ElementType m_ElementType;
+    ElementCreateParams m_Params;
     ElementId m_ElementId{ElementId::InvalidId};
     std::unique_ptr<Element> m_RemovedElement;
 };

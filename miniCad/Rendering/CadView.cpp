@@ -1,6 +1,7 @@
 #include "CadView.h"
 #include "Document.h"
 #include "BoxElement.h"
+#include "Controller/Interaction/InteractionManager.h"
 #include "Presentation/SelectionManager.h"
 #include "Presentation/ViewObjectRegistry.h"
 
@@ -69,6 +70,14 @@ opencascade::handle<AIS_InteractiveContext> CadView::GetContext() {
     return m_Context;
 }
 
+opencascade::handle<V3d_View> CadView::GetView() {
+    return m_View;
+}
+
+void CadView::SetInteractionManager(InteractionManager *interactionManager) {
+    m_InteractionManager = interactionManager;
+}
+
 
 void CadView::paintEvent(QPaintEvent *) {
     if (!m_View.IsNull()) {
@@ -100,60 +109,27 @@ void CadView::resizeEvent(QResizeEvent *) {
     }
 }
 
-void CadView::mousePressEvent(
-    QMouseEvent *event) {
-    m_LastMousePos = event->pos();
-    if (event->button() == Qt::RightButton) {
-        m_View->StartRotation(event->x(), event->y());
+void CadView::mousePressEvent(QMouseEvent *event) {
+    if (m_InteractionManager) {
+        m_InteractionManager->MousePress(event);
     }
     QWidget::mousePressEvent(event);
 }
 
 void CadView::mouseReleaseEvent(QMouseEvent *event) {
-    if (event->button() != Qt::LeftButton)
-        return;
-
-    if (!m_Context->HasDetected()) {
-        m_Context->ClearSelected(Standard_True);
-        m_SelectionManager->Clear();
-        return;
+    if (m_InteractionManager) {
+        m_InteractionManager->MouseRelease(event);
     }
-
-    m_Context->SelectDetected();
-    m_Context->InitSelected();
-    if (!m_Context->MoreSelected()) {
-        m_SelectionManager->Clear();
-        return;
-    }
-    const auto ais = m_Context->SelectedInteractive();
-    if (ais.IsNull()) {
-        m_SelectionManager->Clear();
-        return;
-    }
-
-    const ElementId id = m_Register->FindElement(ais);
-    m_SelectionManager->SetSelected(id);
 }
 
-void CadView::mouseMoveEvent(
-    QMouseEvent *event) {
-    QPoint delta = event->pos() - m_LastMousePos;
-
-    if (event->buttons() & Qt::RightButton) {
-        m_View->Rotation(event->x(), event->y());
+void CadView::mouseMoveEvent(QMouseEvent *event) {
+    if (m_InteractionManager) {
+        m_InteractionManager->MouseMove(event);
     }
-
-    if (event->buttons() & Qt::MiddleButton) {
-        m_View->Pan(delta.x(), -delta.y());
-    }
-
-    m_LastMousePos = event->pos();
-
-    m_Context->MoveTo(event->x(), event->y(), m_View,Standard_True);
 }
 
-void CadView::wheelEvent(
-    QWheelEvent *event) {
-    const double factor = event->angleDelta().y() < 0 ? 0.9 : 1.1;
-    m_View->SetScale(m_View->Scale() * factor);
+void CadView::wheelEvent(QWheelEvent *event) {
+    if (m_InteractionManager) {
+        m_InteractionManager->Wheel(event);
+    }
 }

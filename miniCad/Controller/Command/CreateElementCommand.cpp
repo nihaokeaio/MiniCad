@@ -8,8 +8,8 @@
 #include "Element.h"
 #include "ElementFactory.h"
 
-CreateElementCommand::CreateElementCommand(Document *document, ElementType elementType)
-    : Command(document), m_ElementType(elementType) {
+CreateElementCommand::CreateElementCommand(Document *document, ElementCreateParams params)
+    : Command(document), m_Params(std::move(params)) {
 }
 
 CreateElementCommand::~CreateElementCommand() = default;
@@ -20,9 +20,13 @@ void CreateElementCommand::Execute() {
         return;
     }
 
-    auto element = ElementFactory::Create(m_ElementType);
+    auto element = ElementFactory::Create(m_Params.type);
     if (!element) {
         return;
+    }
+
+    for (const auto &[key, value]: m_Params.properties) {
+        element->Properties().Set(key, value);
     }
 
     const auto rawElement = element.get();

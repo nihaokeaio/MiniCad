@@ -3,7 +3,11 @@
 //
 
 #pragma once
+#include <string>
+
+#include "ElementCreateParams.h"
 #include "ElementId.h"
+#include "ElementType.h"
 #include "Property/PropertyValue.h"
 
 class CommandManager;
@@ -16,6 +20,8 @@ public:
     void CreateBox() const;
 
     void CreateCylinder() const;
+
+    void CreateElement(const ElementCreateParams &params) const;
 
     void ChangeElementProperty(ElementId id, const std::string &key, const PropertyValue &value);
 

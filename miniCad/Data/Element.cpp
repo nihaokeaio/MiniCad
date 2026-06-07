@@ -4,8 +4,13 @@
 
 #include "Element.h"
 
+#include <BRepBuilderAPI_Transform.hxx>
+#include <gp_Trsf.hxx>
+#include <gp_Vec.hxx>
+
 Element::Element() : m_Id(ElementId::InvalidId), m_Document(nullptr) {
     m_Name = "Element";
+    m_Properties.SetT("Position", std::vector<double>{0.0, 0.0, 0.0});
 }
 
 Document *Element::GetDocument() const {
@@ -63,4 +68,24 @@ void Element::GetProperty(const std::string &key, PropertyValue &value) const {
     if (m_Properties.Exists(key)) {
         value = m_Properties.Get(key);
     }
+}
+
+std::vector<double> Element::GetPosition() const {
+    std::vector<double> position{0.0, 0.0, 0.0};
+    GetProperty("Position", position);
+    if (position.size() != 3) {
+        return {0.0, 0.0, 0.0};
+    }
+    return position;
+}
+
+TopoDS_Shape Element::ApplyPlacement(const TopoDS_Shape &shape) const {
+    const auto position = GetPosition();
+    if (position[0] == 0.0 && position[1] == 0.0 && position[2] == 0.0) {
+        return shape;
+    }
+
+    gp_Trsf transform;
+    transform.SetTranslation(gp_Vec(position[0], position[1], position[2]));
+    return BRepBuilderAPI_Transform(shape, transform).Shape();
 }

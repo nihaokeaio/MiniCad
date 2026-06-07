@@ -10,6 +10,7 @@
 #include "CadView.h"
 #include "Element.h"
 #include "Controller/CadController.h"
+#include "Controller/Interaction/InteractionManager.h"
 
 MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     auto toolbar = addToolBar("Main Toolbar");
@@ -22,10 +23,10 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
 
     QObject::connect(action, &QAction::triggered, m_Context->GetCadView(), &CadView::PrintSelection);
     QObject::connect(createBox, &QAction::triggered, this, [context]() {
-        context->GetCadController()->CreateBox();
+        context->GetInteractionManager()->SetCreateElementTool(ElementType::Box);
     });
     QObject::connect(createCylinder, &QAction::triggered, this, [context]() {
-        context->GetCadController()->CreateCylinder();
+        context->GetInteractionManager()->SetCreateElementTool(ElementType::Cylinder);
     });
     QObject::connect(addBoxWidth, &QAction::triggered, this, [context]() {
         const auto selection = context->GetSelectManager();

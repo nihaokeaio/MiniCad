@@ -14,5 +14,5 @@ BoxElement::BoxElement() {
 }
 
 TopoDS_Shape BoxElement::BuildShape() const {
-    return BRepPrimAPI_MakeBox(GetLength(), GetWidth(), GetHeight());
+    return ApplyPlacement(BRepPrimAPI_MakeBox(GetLength(), GetWidth(), GetHeight()));
 }

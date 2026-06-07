@@ -5,6 +5,7 @@
 #pragma once
 #include <TopoDS_Shape.hxx>
 #include <qstring.h>
+#include <vector>
 
 #include "Document.h"
 #include "ElementId.h"
@@ -30,6 +31,10 @@ public:
      QString GetName();
 
      [[nodiscard]] virtual TopoDS_Shape BuildShape() const = 0;
+
+     [[nodiscard]] std::vector<double> GetPosition() const;
+
+     [[nodiscard]] TopoDS_Shape ApplyPlacement(const TopoDS_Shape &shape) const;
 
      [[nodiscard]] PropertySet &Properties();
 
@@ -61,4 +66,3 @@ template<typename T>
 bool Element::GetProperty(const std::string &key, T &value) const {
      return m_Properties.Get(key, value);
 }
-

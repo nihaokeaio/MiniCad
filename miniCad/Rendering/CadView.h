@@ -17,6 +17,7 @@ class Element;
 class AIS_InteractiveContext;
 class V3d_View;
 class V3d_Viewer;
+class InteractionManager;
 
 class CadView : public QWidget {
     //Q_OBJECT
@@ -24,7 +25,13 @@ public:
     explicit CadView(Document *doc, ViewObjectRegistry *registry, SelectionManager *selectionManager,
                      QWidget *parent = nullptr);
 
+public:
     Handle(AIS_InteractiveContext) GetContext();
+
+    Handle(V3d_View) GetView();
+
+public:
+    void SetInteractionManager(InteractionManager *interactionManager);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -61,4 +68,5 @@ private:
     Document *m_document;
     ViewObjectRegistry *m_Register;
     SelectionManager *m_SelectionManager;
+    InteractionManager *m_InteractionManager = nullptr;
 };

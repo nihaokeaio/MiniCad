@@ -10,6 +10,7 @@
 
 
 class PreviewAdaptor;
+class CoordinateResolver;
 class InteractionManager;
 class CommandManager;
 class CadController;
@@ -53,6 +54,7 @@ private:
     std::unique_ptr<ViewObjectRegistry> m_Registry;
     std::unique_ptr<ViewAdaptor> m_Adaptor;
     std::unique_ptr<PreviewAdaptor> m_PreviewAdaptor;
+    std::unique_ptr<CoordinateResolver> m_CoordinateResolver;
     std::unique_ptr<CommandManager> m_CommandManager;
     std::unique_ptr<PreviewManager> m_PreviewManager;
     std::unique_ptr<InteractionManager> m_InteractionManager;

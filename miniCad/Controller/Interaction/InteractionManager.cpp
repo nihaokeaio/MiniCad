@@ -10,6 +10,23 @@
 #include "NavigationHandler.h"
 #include "SelectionHandler.h"
 
+InteractionContext::InteractionContext(const opencascade::handle<AIS_InteractiveContext> &aisContext,
+                                       const opencascade::handle<V3d_View> &view, Document *document,
+                                       ViewObjectRegistry *registry,
+                                       SelectionManager *selectionManager, CadController *controller,
+                                       PreviewManager *previewManager, CoordinateResolver *coordinateResolver)
+    : m_AisContext(aisContext),
+      m_View(view),
+      m_Document(document),
+      m_Registry(registry),
+      m_Selection(selectionManager),
+      m_Controller(controller),
+      m_PreviewManager(previewManager),
+      m_CoordinateResolver(coordinateResolver) {
+}
+
+InteractionContext::~InteractionContext() = default;
+
 InteractionManager::InteractionManager(std::unique_ptr<InteractionContext> context) {
     m_Context = std::move(context);
     Initiate();

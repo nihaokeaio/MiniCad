@@ -22,27 +22,27 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
     }
 
     // TODO: Replace OCCT AIS picking with custom ray/BVH picking.
-    m_Context->aisContext->MoveTo(event->x(), event->y(), m_Context->view, Standard_True);
+    m_Context->m_AisContext->MoveTo(event->x(), event->y(), m_Context->m_View, Standard_True);
 
-    if (!m_Context->aisContext->HasDetected()) {
-        m_Context->aisContext->ClearSelected(Standard_True);
-        m_Context->selection->Clear();
+    if (!m_Context->m_AisContext->HasDetected()) {
+        m_Context->m_AisContext->ClearSelected(Standard_True);
+        m_Context->m_Selection->Clear();
         return true;
     }
 
-    m_Context->aisContext->SelectDetected();
-    m_Context->aisContext->InitSelected();
-    if (!m_Context->aisContext->MoreSelected()) {
-        m_Context->selection->Clear();
+    m_Context->m_AisContext->SelectDetected();
+    m_Context->m_AisContext->InitSelected();
+    if (!m_Context->m_AisContext->MoreSelected()) {
+        m_Context->m_Selection->Clear();
         return true;
     }
-    const auto ais = m_Context->aisContext->SelectedInteractive();
+    const auto ais = m_Context->m_AisContext->SelectedInteractive();
     if (ais.IsNull()) {
-        m_Context->selection->Clear();
+        m_Context->m_Selection->Clear();
         return true;
     }
 
-    const ElementId id = m_Context->registry->FindElement(ais);
-    m_Context->selection->SetSelected(id);
+    const ElementId id = m_Context->m_Registry->FindElement(ais);
+    m_Context->m_Selection->SetSelected(id);
     return true;
 }

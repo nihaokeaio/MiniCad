@@ -11,6 +11,7 @@
 #include "ElementType.h"
 #include "InteractionHandler.h"
 
+class CoordinateResolver;
 class AIS_InteractiveContext;
 class V3d_View;
 class Document;
@@ -23,13 +24,23 @@ class QMouseEvent;
 class QWheelEvent;
 
 struct InteractionContext {
-    Handle(AIS_InteractiveContext) aisContext;
-    Handle(V3d_View) view;
-    Document *document = nullptr;
-    ViewObjectRegistry *registry = nullptr;
-    SelectionManager *selection = nullptr;
-    CadController *controller = nullptr;
-    PreviewManager *preview = nullptr;
+public:
+    InteractionContext(const Handle(AIS_InteractiveContext) &aisContext, const Handle(V3d_View) &view,
+                       Document *document, ViewObjectRegistry *registry,
+                       SelectionManager *selectionManager, CadController *controller, PreviewManager *previewManager,
+                       CoordinateResolver *coordinateResolver);
+
+    ~InteractionContext();
+
+public:
+    Handle(AIS_InteractiveContext) m_AisContext;
+    Handle(V3d_View) m_View;
+    Document *m_Document = nullptr;
+    ViewObjectRegistry *m_Registry = nullptr;
+    SelectionManager *m_Selection = nullptr;
+    CadController *m_Controller = nullptr;
+    PreviewManager *m_PreviewManager = nullptr;
+    CoordinateResolver *m_CoordinateResolver = nullptr;
 };
 
 class InteractionManager {

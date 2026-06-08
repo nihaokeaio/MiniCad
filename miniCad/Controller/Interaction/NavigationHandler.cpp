@@ -17,7 +17,7 @@ NavigationHandler::NavigationHandler(InteractionContext *context) : InteractionH
 bool NavigationHandler::MousePress(QMouseEvent *event) {
     m_LastMousePos = event->pos();
     if (event->button() == Qt::RightButton) {
-        m_Context->view->StartRotation(event->x(), event->y());
+        m_Context->m_View->StartRotation(event->x(), event->y());
         return true;
     }
     return event->button() == Qt::MiddleButton;
@@ -28,12 +28,12 @@ bool NavigationHandler::MouseMove(QMouseEvent *event) {
     bool handled = false;
 
     if (event->buttons() & Qt::RightButton) {
-        m_Context->view->Rotation(event->x(), event->y());
+        m_Context->m_View->Rotation(event->x(), event->y());
         handled = true;
     }
 
     if (event->buttons() & Qt::MiddleButton) {
-        m_Context->view->Pan(delta.x(), -delta.y());
+        m_Context->m_View->Pan(delta.x(), -delta.y());
         handled = true;
     }
 
@@ -42,6 +42,6 @@ bool NavigationHandler::MouseMove(QMouseEvent *event) {
 
 bool NavigationHandler::Wheel(QWheelEvent *event) {
     const double factor = event->angleDelta().y() < 0 ? 0.9 : 1.1;
-    m_Context->view->SetScale(m_Context->view->Scale() * factor);
+    m_Context->m_View->SetScale(m_Context->m_View->Scale() * factor);
     return true;
 }

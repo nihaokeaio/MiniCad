@@ -5,6 +5,7 @@
 #include "BoxElement.h"
 
 #include <BRepPrimAPI_MakeBox.hxx>
+#include <gp_Pnt.hxx>
 
 BoxElement::BoxElement() {
     m_Name = "BoxElement";
@@ -14,7 +15,11 @@ BoxElement::BoxElement() {
 }
 
 TopoDS_Shape BoxElement::BuildShape() const {
-    return BRepPrimAPI_MakeBox(GetLength(), GetWidth(), GetHeight());
+    const double halfLength = GetLength() * 0.5;
+    const double halfWidth = GetWidth() * 0.5;
+    return BRepPrimAPI_MakeBox(
+        gp_Pnt(-halfLength, -halfWidth, 0.0),
+        gp_Pnt(halfLength, halfWidth, GetHeight()));
 }
 
 double BoxElement::GetWidth() const {

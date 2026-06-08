@@ -20,7 +20,7 @@ void PreviewAdaptor::ShowShape(const TopoDS_Shape &shape) {
         m_PreviewAis->SetShape(shape);
     } else {
         m_PreviewAis = new AIS_Shape(shape);
-        m_Context->Display(m_PreviewAis, AIS_Shaded, 0, Standard_False);
+        m_Context->Display(m_PreviewAis, AIS_Shaded, -1, Standard_False);
     }
     m_Context->UpdateCurrentViewer();
 }
@@ -34,7 +34,6 @@ void PreviewAdaptor::UpdateTransform(const gp_Trsf &transform) {
         return;
     }
     m_PreviewAis->SetLocalTransformation(transform);
-    m_Context->Redisplay(m_PreviewAis, Standard_False);
     m_Context->UpdateCurrentViewer();
 }
 

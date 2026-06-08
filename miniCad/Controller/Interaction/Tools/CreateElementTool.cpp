@@ -12,11 +12,12 @@
 #include "../../ElementCreateParams.h"
 #include "../../Preview/PreviewManager.h"
 #include "../InteractionManager.h"
+#include "Controller/Interaction/CoordinateResolver.h"
 
 CreateElementTool::CreateElementTool(InteractionContext *context, ElementType elementType, bool continuous)
     : InteractionHandler(context), m_ElementType(elementType), m_Continuous(continuous) {
-    if (m_Context->preview) {
-        m_Context->preview->BeginElementPreview(ElementCreateParams{m_ElementType, {}});
+    if (m_Context->m_PreviewManager) {
+        m_Context->m_PreviewManager->BeginElementPreview(ElementCreateParams{m_ElementType, {}});
     }
 }
 
@@ -25,15 +26,17 @@ bool CreateElementTool::MousePress(QMouseEvent *event) {
         return false;
     }
 
-    Standard_Real x, y, z;
-    m_Context->view->Convert(event->x(), event->y(), x, y, z);
+    auto ints = m_Context->m_CoordinateResolver->ScreenToWorkPlane(event->x(), event->y());
+    if (!ints.has_value()) {
+        return false;
+    }
     ElementCreateParams params{
         m_ElementType,
-        {{"Position", PropertyValue(GeometryTypes::Point3D(x, y, z))}}
+        {{"Position", PropertyValue(ints.value())}}
     };
-    m_Context->controller->CreateElement(params);
-    if (m_Context->preview) {
-        m_Context->preview->ExitPreviewState();
+    m_Context->m_Controller->CreateElement(params);
+    if (m_Context->m_PreviewManager) {
+        m_Context->m_PreviewManager->ExitPreviewState();
     }
     return true;
 }
@@ -44,8 +47,8 @@ InteractionPostAction CreateElementTool::OnMousePressAfter(QMouseEvent *, bool h
     }
 
     if (m_Continuous) {
-        if (m_Context->preview) {
-            m_Context->preview->BeginElementPreview(ElementCreateParams{m_ElementType, {}});
+        if (m_Context->m_PreviewManager) {
+            m_Context->m_PreviewManager->BeginElementPreview(ElementCreateParams{m_ElementType, {}});
         }
         return InteractionPostAction::None;
     }
@@ -54,14 +57,16 @@ InteractionPostAction CreateElementTool::OnMousePressAfter(QMouseEvent *, bool h
 }
 
 bool CreateElementTool::MouseMove(QMouseEvent *event) {
-    if (m_Context->preview) {
-        Standard_Real x, y, z;
-        m_Context->view->Convert(event->x(), event->y(), x, y, z);
+    if (m_Context->m_PreviewManager) {
+        auto ints = m_Context->m_CoordinateResolver->ScreenToWorkPlane(event->x(), event->y());
+        if (!ints.has_value()) {
+            return false;
+        }
         ElementCreateParams params{
             m_ElementType,
-            {{"Position", PropertyValue(GeometryTypes::Point3D(x, y, z))}}
+            {{"Position", PropertyValue(ints.value())}}
         };
-        m_Context->preview->UpdateElementPreview(params);
+        m_Context->m_PreviewManager->UpdateElementPreview(params);
     }
     return false;
 }

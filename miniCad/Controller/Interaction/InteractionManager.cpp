@@ -9,6 +9,8 @@
 #include "Tools/CreateElementTool.h"
 #include "NavigationHandler.h"
 #include "SelectionHandler.h"
+#include "SelectionManager.h"
+#include "ViewController.h"
 
 InteractionContext::InteractionContext(const opencascade::handle<AIS_InteractiveContext> &aisContext,
                                        const opencascade::handle<V3d_View> &view, Document *document,
@@ -37,6 +39,7 @@ InteractionManager::~InteractionManager() = default;
 void InteractionManager::Initiate() {
     m_GlobalHandlers.push_back(std::make_unique<NavigationHandler>(m_Context.get()));
     m_ActiveHandler = std::make_unique<SelectionHandler>(m_Context.get());
+    m_ViewController = std::make_unique<ViewController>(m_Context.get());
 }
 
 void InteractionManager::SetActiveHandler(std::unique_ptr<InteractionHandler> handler) {
@@ -85,6 +88,26 @@ void InteractionManager::Wheel(QWheelEvent *event) {
     }
     if (m_ActiveHandler) {
         m_ActiveHandler->Wheel(event);
+    }
+}
+
+void InteractionManager::KeyPress(const QKeyEvent *event) const {
+    switch (event->key()) {
+        case Qt::Key_F:
+            if (m_Context->m_Selection->HasSelection()) {
+                m_ViewController->FocusSelection();
+            } else {
+                m_ViewController->FitAll();
+            }
+            break;
+        case Qt::Key_1:
+            m_ViewController->SetAxoView();
+            break;
+        case Qt::Key_2:
+            m_ViewController->SetTopView();
+            break;
+        default:
+            break;
     }
 }
 

@@ -13,6 +13,7 @@
 #include "Controller/Interaction/CoordinateResolver.h"
 #include "Controller/Interaction/InteractionManager.h"
 #include "Controller/Preview/PreviewManager.h"
+#include "Presentation/ReferenceOverlay.h"
 #include "Presentation/SelectionManager.h"
 #include "Presentation/DocumentObserver.h"
 #include "Presentation/ViewAdaptor.h"
@@ -29,6 +30,9 @@ void AppContext::Initialize() {
     m_View = new CadView(m_Document.get(), m_Registry.get(), m_Selection.get());
     m_Adaptor = std::make_unique<ViewAdaptor>(m_View->GetContext(), m_Registry.get(), m_Document.get());
     m_PreviewAdaptor = std::make_unique<PreviewAdaptor>(m_View->GetContext());
+    m_ReferenceOverlay = std::make_unique<ReferenceOverlay>(m_View->GetContext());
+    m_ReferenceOverlay->ShowGrid(true);
+    m_ReferenceOverlay->ShowAxes(true);
     m_CoordinateResolver = std::make_unique<CoordinateResolver>(m_View->GetView());
     m_DocumentObserver = std::make_unique<DocumentObserver>(m_Document.get(), m_Adaptor.get());
     m_CommandManager = std::make_unique<CommandManager>();

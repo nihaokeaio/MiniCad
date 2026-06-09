@@ -15,6 +15,7 @@ class InteractionManager;
 class CommandManager;
 class CadController;
 class PreviewManager;
+class ReferenceOverlay;
 class CadView;
 class ViewAdaptor;
 class ViewObjectRegistry;
@@ -54,6 +55,7 @@ private:
     std::unique_ptr<ViewObjectRegistry> m_Registry;
     std::unique_ptr<ViewAdaptor> m_Adaptor;
     std::unique_ptr<PreviewAdaptor> m_PreviewAdaptor;
+    std::unique_ptr<ReferenceOverlay> m_ReferenceOverlay;
     std::unique_ptr<CoordinateResolver> m_CoordinateResolver;
     std::unique_ptr<CommandManager> m_CommandManager;
     std::unique_ptr<PreviewManager> m_PreviewManager;

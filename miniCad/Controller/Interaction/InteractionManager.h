@@ -5,12 +5,14 @@
 #pragma once
 
 #include <memory>
+#include <qevent.h>
 #include <Standard_Handle.hxx>
 #include <vector>
 
 #include "ElementType.h"
 #include "InteractionHandler.h"
 
+class ViewController;
 class CoordinateResolver;
 class AIS_InteractiveContext;
 class V3d_View;
@@ -67,6 +69,8 @@ public:
 
     void Wheel(QWheelEvent *event);
 
+    void KeyPress(const QKeyEvent *event) const;
+
 private:
     bool DispatchGlobalMousePress(QMouseEvent *event) const;
 
@@ -82,4 +86,5 @@ private:
     std::unique_ptr<InteractionContext> m_Context;
     std::vector<std::unique_ptr<InteractionHandler> > m_GlobalHandlers;
     std::unique_ptr<InteractionHandler> m_ActiveHandler;
+    std::unique_ptr<ViewController> m_ViewController;
 };

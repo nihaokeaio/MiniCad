@@ -26,7 +26,7 @@ void ViewAdaptor::AddElement(ElementId elementId) const {
     }
     Handle(AIS_Shape) ais = new AIS_Shape(shape);
     ais->SetLocalTransformation(element->GetPlacementTransform());
-    m_Context->Display(ais, AIS_Shaded, 0, Standard_True);
+    m_Context->Display(ais, AIS_Shaded, 0, Standard_False);
     m_Registry->Register(ais, elementId);
 }
 
@@ -35,7 +35,6 @@ void ViewAdaptor::RemoveElement(ElementId id) const {
     for (auto aisObject: m_Registry->FindElementAisObjects(id)) {
         m_Context->Remove(aisObject, Standard_False);
     }
-    m_Context->UpdateCurrentViewer();
     m_Registry->UnRegister(id);
 }
 
@@ -56,7 +55,6 @@ void ViewAdaptor::UpdateElement(const std::shared_ptr<MessageInfo::ElementChange
                 if (element && !aisObject.IsNull()) {
                     aisObject->SetLocalTransformation(element->GetPlacementTransform());
                     m_Context->Redisplay(aisObject, Standard_False);
-                    m_Context->UpdateCurrentViewer();
                 }
             } else {
                 RemoveElement(payload->elementId);
@@ -67,5 +65,6 @@ void ViewAdaptor::UpdateElement(const std::shared_ptr<MessageInfo::ElementChange
         default: {
         }
     }
+    m_Context->UpdateCurrentViewer();
 }
 

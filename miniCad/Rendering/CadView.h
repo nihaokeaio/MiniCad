@@ -53,6 +53,8 @@ protected:
 
     void wheelEvent(QWheelEvent *event) override;
 
+    void keyPressEvent(QKeyEvent *event) override;
+
 private:
     void InitViewer();
 

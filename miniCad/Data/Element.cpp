@@ -4,6 +4,7 @@
 
 #include "Element.h"
 
+#include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
@@ -45,8 +46,17 @@ void Element::SetId(const ElementId &elementId) {
 
 Element::~Element() = default;
 
-QString Element::GetName() {
+std::string Element::GetName() {
     return m_Name;
+}
+
+Bnd_Box Element::GetBoundingBox() const {
+    Bnd_Box box;
+    const auto shape = ApplyPlacement(BuildShape());
+    if (!shape.IsNull()) {
+        BRepBndLib::Add(shape, box);
+    }
+    return box;
 }
 
 PropertySet &Element::Properties() {

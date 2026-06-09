@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <Bnd_Box.hxx>
 #include <TopoDS_Shape.hxx>
 #include <gp_Trsf.hxx>
 #include <qstring.h>
@@ -29,7 +30,9 @@ public:
 
      virtual ~Element();
 
-     QString GetName();
+     std::string GetName();
+
+     [[nodiscard]] virtual Bnd_Box GetBoundingBox() const;
 
      [[nodiscard]] virtual TopoDS_Shape BuildShape() const = 0;
 
@@ -57,7 +60,7 @@ protected:
      virtual MessageInfo::ElementUpdateHint OnSetProperty(const std::string &key, const PropertyValue &value);
 
 protected:
-     QString m_Name;
+     std::string m_Name;
      ElementId m_Id;
      Document *m_Document;
      PropertySet m_Properties;

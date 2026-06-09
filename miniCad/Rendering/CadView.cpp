@@ -9,6 +9,7 @@
 #include <WNT_Window.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <AIS_InteractiveContext.hxx>
+#include <Graphic3d_Camera.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 #include <V3d_Viewer.hxx>
 #include <V3d_View.hxx>
@@ -26,6 +27,7 @@ CadView::CadView(Document *doc, ViewObjectRegistry *registry, SelectionManager *
     setAttribute(Qt::WA_PaintOnScreen);
     setAutoFillBackground(false);
     setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
     InitViewer();
     InitScene();
     QTimer::singleShot(0, this, [this]() {
@@ -95,7 +97,7 @@ void CadView::PrintSelection() const {
         if (!obj.IsNull()) {
             const auto elementId = m_Register->FindElement(obj.get());
             if (const auto element = m_document->FindElement(elementId)) {
-                qDebug() << "selected object " << element->GetName();
+                qDebug() << "selected object " << element->GetName().c_str();
             } else {
                 qDebug() << "selected  Null!";
             }
@@ -110,6 +112,7 @@ void CadView::resizeEvent(QResizeEvent *) {
 }
 
 void CadView::mousePressEvent(QMouseEvent *event) {
+    setFocus(Qt::MouseFocusReason);
     if (m_InteractionManager) {
         m_InteractionManager->MousePress(event);
     }
@@ -131,5 +134,11 @@ void CadView::mouseMoveEvent(QMouseEvent *event) {
 void CadView::wheelEvent(QWheelEvent *event) {
     if (m_InteractionManager) {
         m_InteractionManager->Wheel(event);
+    }
+}
+
+void CadView::keyPressEvent(QKeyEvent *event) {
+    if (m_InteractionManager) {
+        m_InteractionManager->KeyPress(event);
     }
 }

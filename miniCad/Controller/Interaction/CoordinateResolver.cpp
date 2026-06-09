@@ -17,7 +17,7 @@ gp_Ax1 CoordinateResolver::GetScreenRay(int x, int y) const {
     Standard_Real worldX, worldY, worldZ;
     Standard_Real dirX, dirY, dirZ;
     m_View->ConvertWithProj(x, y, worldX, worldY, worldZ, dirX, dirY, dirZ);
-    return gp_Ax1(gp_Pnt(worldX, worldY, worldZ), gp_Dir(dirX, dirY, dirZ));
+    return {gp_Pnt(worldX, worldY, worldZ), gp_Dir(dirX, dirY, dirZ)};
 }
 
 std::optional<GeometryTypes::Point3D> CoordinateResolver::ScreenToWorkPlane(int x, int y) const {

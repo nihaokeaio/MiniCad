@@ -22,6 +22,7 @@ class ViewObjectRegistry;
 class SelectionManager;
 class DocumentObserver;
 class Document;
+class Scene;
 
 class AppContext {
     DECLARE_SINGLETON(AppContext)
@@ -48,8 +49,11 @@ public:
 
     [[nodiscard]] PreviewManager *GetPreviewManager() const;
 
+    [[nodiscard]] Scene *GetScene() const;
+
 private:
     std::unique_ptr<Document> m_Document;
+    std::unique_ptr<Scene> m_Scene;
     std::unique_ptr<DocumentObserver> m_DocumentObserver;
     std::unique_ptr<SelectionManager> m_Selection;
     std::unique_ptr<ViewObjectRegistry> m_Registry;

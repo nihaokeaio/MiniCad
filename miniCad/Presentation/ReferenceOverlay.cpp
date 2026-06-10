@@ -16,6 +16,7 @@
 namespace {
 Handle(AIS_Shape) MakeLineObject(const gp_Pnt &from, const gp_Pnt &to, const Quantity_Color &color,
                                  double width = 1.0) {
+    // TODO: Replace AIS line overlay with renderer-native grid/axis geometry after OpenGL rendering is introduced.
     const TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(from, to);
     Handle(AIS_Shape) ais = new AIS_Shape(edge);
     ais->SetColor(color);

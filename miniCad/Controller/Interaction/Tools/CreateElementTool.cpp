@@ -6,8 +6,9 @@
 
 #include <QMouseEvent>
 #include <V3d_View.hxx>
+#include <gp_Vec.hxx>
 
-#include "GeometryTypes.h"
+#include "../../../Data/Geometry/GeometryTypes.h"
 #include "../../CadController.h"
 #include "../../ElementCreateParams.h"
 #include "../../Preview/PreviewManager.h"
@@ -30,9 +31,11 @@ bool CreateElementTool::MousePress(QMouseEvent *event) {
     if (!ints.has_value()) {
         return false;
     }
+    GeometryTypes::RTransform transform;
+    transform.SetTranslation(gp_Vec(ints.value()));
     ElementCreateParams params{
         m_ElementType,
-        {{"Position", PropertyValue(ints.value())}}
+        {{"LocalTransform", PropertyValue(transform)}}
     };
     m_Context->m_Controller->CreateElement(params);
     if (m_Context->m_PreviewManager) {
@@ -62,9 +65,11 @@ bool CreateElementTool::MouseMove(QMouseEvent *event) {
         if (!ints.has_value()) {
             return false;
         }
+        GeometryTypes::RTransform transform;
+        transform.SetTranslation(gp_Vec(ints.value()));
         ElementCreateParams params{
             m_ElementType,
-            {{"Position", PropertyValue(ints.value())}}
+            {{"LocalTransform", PropertyValue(transform)}}
         };
         m_Context->m_PreviewManager->UpdateElementPreview(params);
     }

@@ -8,7 +8,7 @@
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_Shape.hxx>
 
-#include "Element.h"
+#include "../Data/Element/Element.h"
 
 ViewAdaptor::ViewAdaptor(const opencascade::handle<AIS_InteractiveContext> &context, ViewObjectRegistry *registry,
                          Document *doc) : m_Context(context), m_Registry(registry), m_Document(doc) {
@@ -25,7 +25,7 @@ void ViewAdaptor::AddElement(ElementId elementId) const {
         return;
     }
     Handle(AIS_Shape) ais = new AIS_Shape(shape);
-    ais->SetLocalTransformation(element->GetPlacementTransform());
+    ais->SetLocalTransformation(element->GetLocalTransform());
     m_Context->Display(ais, AIS_Shaded, 0, Standard_False);
     m_Registry->Register(ais, elementId);
 }
@@ -53,7 +53,7 @@ void ViewAdaptor::UpdateElement(const std::shared_ptr<MessageInfo::ElementChange
                 const auto element = m_Document->FindElement(payload->elementId);
                 const auto aisObject = m_Registry->FindFirstElementAisObject(payload->elementId);
                 if (element && !aisObject.IsNull()) {
-                    aisObject->SetLocalTransformation(element->GetPlacementTransform());
+                    aisObject->SetLocalTransformation(element->GetLocalTransform());
                     m_Context->Redisplay(aisObject, Standard_False);
                 }
             } else {
@@ -67,4 +67,3 @@ void ViewAdaptor::UpdateElement(const std::shared_ptr<MessageInfo::ElementChange
     }
     m_Context->UpdateCurrentViewer();
 }
-

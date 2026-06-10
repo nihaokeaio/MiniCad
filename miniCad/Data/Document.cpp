@@ -4,7 +4,7 @@
 
 #include "Document.h"
 
-#include "Element.h"
+#include "Element/Element.h"
 
 void Document::RegisterElement(std::unique_ptr<Element> &&element) {
     if (element->GetId() == ElementId::InvalidId) {

@@ -6,7 +6,7 @@
 #include <AIS_InteractiveObject.hxx>
 #include <Standard_Handle.hxx>
 
-#include "ElementId.h"
+#include "../Data/Element/ElementId.h"
 
 class ViewObjectRegistry {
 public:

@@ -5,7 +5,7 @@
 #include "ChangePropertyCommand.h"
 
 #include "Document.h"
-#include "Element.h"
+#include "../../Data/Element/Element.h"
 
 ChangePropertyCommand::ChangePropertyCommand(Document *document, ElementId elementId, const std::string &propertyKey,
                                              const PropertyValue &newValue)

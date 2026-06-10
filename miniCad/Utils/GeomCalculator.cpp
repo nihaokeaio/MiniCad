@@ -3,6 +3,7 @@
 //
 
 #include "GeomCalculator.h"
+#include <V3d_View.hxx>
 
 std::optional<gp_Pnt> GeomCalculator::CalculatorRayIntsPlane(const gp_Ax1 &ray, const gp_Pln &plane) {
     // 获取射线的原点和方向
@@ -41,4 +42,50 @@ std::optional<gp_Pnt> GeomCalculator::CalculatorRayIntsPlane(const gp_Ax1 &ray, 
     // if (distance > 1e-6) return std::nullopt;
 
     return intersectionPoint;
+}
+
+bool GeomCalculator::RayIntersectBox(const Bnd_Box &box, const gp_Lin &ray, double &tmin, double &tmax) {
+    tmin = 0.0;
+    tmax = Precision::Infinite();
+
+    double aabbMin[3], aabbMax[3];
+    box.Get(aabbMin[0], aabbMin[1], aabbMin[2], aabbMax[0], aabbMax[1], aabbMax[2]);
+
+    const gp_Pnt &O = ray.Location();
+    const gp_Dir &D = ray.Direction();
+
+    for (int i = 0; i < 3; ++i) {
+        if (Abs(D.Coord(i + 1)) < Precision::Angular()) {
+            // 射线平行于当前轴的平面
+            if (O.Coord(i + 1) < aabbMin[i] || O.Coord(i + 1) > aabbMax[i]) {
+                return false; // 不相交
+            }
+        } else {
+            // 计算当前轴的两个交点参数
+            double invD = 1.0 / D.Coord(i + 1);
+            double t1 = (aabbMin[i] - O.Coord(i + 1)) * invD;
+            double t2 = (aabbMax[i] - O.Coord(i + 1)) * invD;
+
+            // 确保t1是近交点，t2是远交点
+            if (t1 > t2)
+                std::swap(t1, t2);
+
+            // 更新总体tmin和tmax
+            tmin = Max(t1, tmin);
+            tmax = Min(t2, tmax);
+
+            // 检查是否已无交集
+            if (tmin > tmax)
+                return false;
+        }
+    }
+
+    return true;
+}
+
+gp_Ax1 GeomCalculator::GetMouseScreenRay(int x, int y, const opencascade::handle<V3d_View> &view) {
+    Standard_Real worldX, worldY, worldZ;
+    Standard_Real dirX, dirY, dirZ;
+    view->ConvertWithProj(x, y, worldX, worldY, worldZ, dirX, dirY, dirZ);
+    return {gp_Pnt(worldX, worldY, worldZ), gp_Dir(dirX, dirY, dirZ)};
 }

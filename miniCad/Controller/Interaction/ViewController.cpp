@@ -8,17 +8,22 @@
 #include <V3d_View.hxx>
 
 #include "Document.h"
-#include "Element.h"
+#include "../../Data/Element/Element.h"
 #include "InteractionManager.h"
 #include "SelectionManager.h"
 
 ViewController::ViewController(InteractionContext *interactionContext) : m_InteractionContext(interactionContext) {
-    SetOrthographic();
+    InitializeDefaultView();
 }
 
 void ViewController::FitAll() const {
     m_InteractionContext->m_View->FitAll();
     m_InteractionContext->m_View->Redraw();
+}
+
+void ViewController::InitializeDefaultView() const {
+    SetAxoView();
+    FitAll();
 }
 
 void ViewController::FocusSelection() const {

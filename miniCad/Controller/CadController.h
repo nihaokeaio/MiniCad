@@ -6,8 +6,8 @@
 #include <string>
 
 #include "ElementCreateParams.h"
-#include "ElementId.h"
-#include "ElementType.h"
+#include "../Data/Element/ElementId.h"
+#include "../Data/Element/ElementType.h"
 #include "Property/PropertyValue.h"
 
 class CommandManager;

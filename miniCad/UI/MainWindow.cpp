@@ -8,7 +8,7 @@
 #include <QToolBar>
 
 #include "CadView.h"
-#include "Element.h"
+#include "../Data/Element/Element.h"
 #include "Controller/CadController.h"
 #include "Controller/Interaction/InteractionManager.h"
 

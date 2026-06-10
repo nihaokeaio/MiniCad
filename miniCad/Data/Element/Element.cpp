@@ -7,11 +7,10 @@
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <gp_Trsf.hxx>
-#include <gp_Vec.hxx>
 
 Element::Element() : m_Id(ElementId::InvalidId), m_Document(nullptr) {
     m_Name = "Element";
-    m_Properties.SetT("Position", GeometryTypes::Point3D(0.0, 0.0, 0.0));
+    m_Properties.SetT("LocalTransform", GeometryTypes::RTransform());
 }
 
 Document *Element::GetDocument() const {
@@ -81,14 +80,8 @@ void Element::GetProperty(const std::string &key, PropertyValue &value) const {
     }
 }
 
-GeometryTypes::Point3D Element::GetPosition() const {
-    GeometryTypes::Point3D position(0.0, 0.0, 0.0);
-    GetProperty("Position", position);
-    return position;
-}
-
 TopoDS_Shape Element::ApplyPlacement(const TopoDS_Shape &shape) const {
-    const auto transform = GetPlacementTransform();
+    const auto transform = GetLocalTransform();
     if (transform.Form() == gp_Identity) {
         return shape;
     }
@@ -96,19 +89,14 @@ TopoDS_Shape Element::ApplyPlacement(const TopoDS_Shape &shape) const {
     return BRepBuilderAPI_Transform(shape, transform).Shape();
 }
 
-gp_Trsf Element::GetPlacementTransform() const {
-    const auto position = GetPosition();
-    gp_Trsf transform;
-    if (position.X() == 0.0 && position.Y() == 0.0 && position.Z() == 0.0) {
-        return transform;
-    }
-
-    transform.SetTranslation(gp_Vec(position));
+GeometryTypes::RTransform Element::GetLocalTransform() const {
+    GeometryTypes::RTransform transform;
+    GetProperty("LocalTransform", transform);
     return transform;
 }
 
 MessageInfo::ElementUpdateHint Element::OnSetProperty(const std::string &key, const PropertyValue &) {
-    if (key == "Position") {
+    if (key == "LocalTransform") {
         return MessageInfo::ElementUpdateHint::Transform;
     }
     return MessageInfo::ElementUpdateHint::Geometry;

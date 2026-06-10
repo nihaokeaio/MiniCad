@@ -6,14 +6,23 @@
 
 #include <AIS_InteractiveContext.hxx>
 #include <QMouseEvent>
-#include <Standard_TypeDef.hxx>
 
-#include "ElementId.h"
+#include "GeomCalculator.h"
+#include "../../Data/Element/ElementId.h"
 #include "InteractionManager.h"
 #include "SelectionManager.h"
 #include "ViewObjectRegistry.h"
+#include "Picking/ScenePicker.h"
 
 SelectionHandler::SelectionHandler(InteractionContext *context) : InteractionHandler(context) {
+    m_ScenePicker = std::make_unique<ScenePicker>(context->m_Scene);
+}
+
+bool SelectionHandler::MousePress(QMouseEvent *event) {
+    if (event->button() != Qt::LeftButton) {
+        return false;
+    }
+    return true;
 }
 
 bool SelectionHandler::MouseRelease(QMouseEvent *event) {
@@ -21,28 +30,22 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
         return false;
     }
 
-    // TODO: Replace OCCT AIS picking with custom ray/BVH picking.
-    m_Context->m_AisContext->MoveTo(event->x(), event->y(), m_Context->m_View, Standard_True);
+    const gp_Lin ray(GeomCalculator::GetMouseScreenRay(event->x(), event->y(), m_Context->m_View));
+    const auto pick = m_ScenePicker->PickByBoundingBox(ray);
+    m_Context->m_AisContext->ClearSelected(Standard_False);
 
-    if (!m_Context->m_AisContext->HasDetected()) {
-        m_Context->m_AisContext->ClearSelected(Standard_True);
+    if (!pick.has_value()) {
         m_Context->m_Selection->Clear();
+        m_Context->m_AisContext->UpdateCurrentViewer();
         return true;
     }
 
-    m_Context->m_AisContext->SelectDetected();
-    m_Context->m_AisContext->InitSelected();
-    if (!m_Context->m_AisContext->MoreSelected()) {
-        m_Context->m_Selection->Clear();
-        return true;
+    m_Context->m_Selection->SetSelected(pick->elementId);
+    for (const auto &aisObject: m_Context->m_Registry->FindElementAisObjects(pick->elementId)) {
+        if (!aisObject.IsNull()) {
+            m_Context->m_AisContext->SetSelected(aisObject, Standard_False);
+        }
     }
-    const auto ais = m_Context->m_AisContext->SelectedInteractive();
-    if (ais.IsNull()) {
-        m_Context->m_Selection->Clear();
-        return true;
-    }
-
-    const ElementId id = m_Context->m_Registry->FindElement(ais);
-    m_Context->m_Selection->SetSelected(id);
+    m_Context->m_AisContext->UpdateCurrentViewer();
     return true;
 }

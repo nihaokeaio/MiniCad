@@ -1,6 +1,6 @@
 #include "CadView.h"
 #include "Document.h"
-#include "BoxElement.h"
+#include "../Data/Element/BoxElement.h"
 #include "Controller/Interaction/InteractionManager.h"
 #include "Presentation/SelectionManager.h"
 #include "Presentation/ViewObjectRegistry.h"

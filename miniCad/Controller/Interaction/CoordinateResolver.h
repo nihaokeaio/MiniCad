@@ -8,7 +8,7 @@
 #include <optional>
 #include <Standard_Handle.hxx>
 
-#include "GeometryTypes.h"
+#include "../../Data/Geometry/GeometryTypes.h"
 
 
 class V3d_View;
@@ -16,8 +16,6 @@ class V3d_View;
 class CoordinateResolver {
 public:
     explicit CoordinateResolver(const Handle(V3d_View) &view);
-
-    gp_Ax1 GetScreenRay(int x, int y) const;
 
     std::optional<GeometryTypes::Point3D> ScreenToWorkPlane(int x, int y) const;
 

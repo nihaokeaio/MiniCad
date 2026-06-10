@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <Utils/GlobalUniqueId.h>
 
-#include "ElementId.h"
+#include "Element/ElementId.h"
 #include "MessageInfo.h"
 
 class Element;

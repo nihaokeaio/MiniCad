@@ -5,7 +5,7 @@
 #pragma once
 #include <Standard_Handle.hxx>
 
-#include "ElementId.h"
+#include "../../Data/Element/ElementId.h"
 
 
 struct InteractionContext;
@@ -17,6 +17,8 @@ public:
 
 public:
     void FitAll() const;
+
+    void InitializeDefaultView() const;
 
     void FocusSelection() const;
 

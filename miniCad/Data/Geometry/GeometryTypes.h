@@ -9,5 +9,6 @@
 
 namespace GeometryTypes {
     using Point3D = gp_XYZ;
+    using Vector3D = gp_XYZ;
     using RTransform = gp_Trsf;
 }

@@ -11,7 +11,7 @@
 #include <variant>
 #include <vector>
 
-#include "GeometryTypes.h"
+#include "../Geometry/GeometryTypes.h"
 
 
 class PropertyValue {

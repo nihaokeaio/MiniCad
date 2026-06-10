@@ -8,10 +8,10 @@
 #include <gp_Trsf.hxx>
 #include <qstring.h>
 
-#include "Document.h"
+#include "../Document.h"
 #include "ElementId.h"
-#include "GeometryTypes.h"
-#include "Property/PropertySet.h"
+#include "../Geometry/GeometryTypes.h"
+#include "../Property/PropertySet.h"
 
 
 class Element {
@@ -36,9 +36,7 @@ public:
 
      [[nodiscard]] virtual TopoDS_Shape BuildShape() const = 0;
 
-     [[nodiscard]] GeometryTypes::Point3D GetPosition() const;
-
-     [[nodiscard]] gp_Trsf GetPlacementTransform() const;
+     [[nodiscard]] GeometryTypes::RTransform GetLocalTransform() const;
 
      [[nodiscard]] TopoDS_Shape ApplyPlacement(const TopoDS_Shape &shape) const;
 

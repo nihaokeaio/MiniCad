@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <string>
 #include <iostream>
+#include <vector>
 
 
 struct ElementId {

@@ -4,13 +4,10 @@
 
 #include "PreviewManager.h"
 
-#include "Element.h"
-#include "ElementFactory.h"
-#include "GeometryTypes.h"
+#include "../../Data/Element/Element.h"
+#include "../../Data/Element/ElementFactory.h"
+#include "../../Data/Geometry/GeometryTypes.h"
 #include "Presentation/PreviewAdaptor.h"
-
-#include <gp_Trsf.hxx>
-#include <gp_Vec.hxx>
 
 PreviewManager::PreviewManager(PreviewAdaptor *adaptor) : m_Adaptor(adaptor) {
 }
@@ -31,14 +28,12 @@ void PreviewManager::UpdateElementPreview(const ElementCreateParams &params) con
         return;
     }
 
-    GeometryTypes::Point3D position(0.0, 0.0, 0.0);
-    const auto iter = params.properties.find("Position");
-    if (iter == params.properties.end() || !iter->second.GetValueR(position)) {
+    GeometryTypes::RTransform transform;
+    const auto iter = params.properties.find("LocalTransform");
+    if (iter == params.properties.end() || !iter->second.GetValueR(transform)) {
         return;
     }
 
-    gp_Trsf transform;
-    transform.SetTranslation(gp_Vec(position));
     m_Adaptor->UpdateTransform(transform);
 }
 

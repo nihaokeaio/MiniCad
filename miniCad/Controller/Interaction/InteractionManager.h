@@ -9,9 +9,10 @@
 #include <Standard_Handle.hxx>
 #include <vector>
 
-#include "ElementType.h"
+#include "../../Data/Element/ElementType.h"
 #include "InteractionHandler.h"
 
+class Scene;
 class ViewController;
 class CoordinateResolver;
 class AIS_InteractiveContext;
@@ -30,7 +31,7 @@ public:
     InteractionContext(const Handle(AIS_InteractiveContext) &aisContext, const Handle(V3d_View) &view,
                        Document *document, ViewObjectRegistry *registry,
                        SelectionManager *selectionManager, CadController *controller, PreviewManager *previewManager,
-                       CoordinateResolver *coordinateResolver);
+                       CoordinateResolver *coordinateResolver, Scene *scene);
 
     ~InteractionContext();
 
@@ -43,6 +44,7 @@ public:
     CadController *m_Controller = nullptr;
     PreviewManager *m_PreviewManager = nullptr;
     CoordinateResolver *m_CoordinateResolver = nullptr;
+    Scene *m_Scene = nullptr;
 };
 
 class InteractionManager {

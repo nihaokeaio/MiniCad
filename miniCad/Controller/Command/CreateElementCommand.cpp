@@ -5,8 +5,8 @@
 #include "CreateElementCommand.h"
 
 #include "Document.h"
-#include "Element.h"
-#include "ElementFactory.h"
+#include "../../Data/Element/Element.h"
+#include "../../Data/Element/ElementFactory.h"
 
 CreateElementCommand::CreateElementCommand(Document *document, ElementCreateParams params)
     : Command(document), m_Params(std::move(params)) {

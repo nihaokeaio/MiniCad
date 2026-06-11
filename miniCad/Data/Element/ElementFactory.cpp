@@ -6,6 +6,8 @@
 
 #include "BoxElement.h"
 #include "CylinderElement.h"
+#include "PointElement.h"
+#include "SegmentElement.h"
 
 std::unique_ptr<Element> ElementFactory::Create(ElementType type) {
     // TODO: Replace this manual registration switch with a type registry or macro-assisted registration
@@ -15,6 +17,10 @@ std::unique_ptr<Element> ElementFactory::Create(ElementType type) {
             return std::make_unique<BoxElement>();
         case ElementType::Cylinder:
             return std::make_unique<CylinderElement>();
+        case ElementType::Point:
+            return std::make_unique<PointElement>();
+        case ElementType::Segment:
+            return std::make_unique<SegmentElement>();
         default:
             return nullptr;
     }

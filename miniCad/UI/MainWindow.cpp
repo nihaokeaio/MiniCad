@@ -17,6 +17,8 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     auto action = toolbar->addAction("Print Selection");
     auto createBox = toolbar->addAction("Box");
     auto createCylinder = toolbar->addAction("Cylinder");
+    auto createPoint = toolbar->addAction("Point");
+    auto createSegment = toolbar->addAction("Segment");
     auto addBoxWidth = toolbar->addAction("AddBoxWidth");
     auto undo = toolbar->addAction("Undo");
     auto redo = toolbar->addAction("Redo");
@@ -27,6 +29,12 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     });
     QObject::connect(createCylinder, &QAction::triggered, this, [context]() {
         context->GetInteractionManager()->SetCreateElementTool(ElementType::Cylinder);
+    });
+    QObject::connect(createPoint, &QAction::triggered, this, [context]() {
+        context->GetInteractionManager()->SetCreateElementTool(ElementType::Point);
+    });
+    QObject::connect(createSegment, &QAction::triggered, this, [context]() {
+        context->GetInteractionManager()->SetCreateElementTool(ElementType::Segment);
     });
     QObject::connect(addBoxWidth, &QAction::triggered, this, [context]() {
         const auto selection = context->GetSelectManager();

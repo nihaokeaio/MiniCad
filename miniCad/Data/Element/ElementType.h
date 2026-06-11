@@ -6,5 +6,7 @@
 
 enum class ElementType {
     Box,
-    Cylinder
+    Cylinder,
+    Point,
+    Segment
 };

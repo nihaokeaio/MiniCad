@@ -255,7 +255,7 @@ CadView Qt event
 ```text
 MouseRelease
   -> GeomCalculator::GetMouseScreenRay
-  -> ScenePicker::PickByBoundingBox
+  -> ScenePicker::Pick
   -> Scene::GetPickCandidates
   -> GeomCalculator::RayIntersectBox
   -> nearest ElementId

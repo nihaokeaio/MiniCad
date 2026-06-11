@@ -3,6 +3,10 @@
 //
 
 #include "GeomCalculator.h"
+
+#include <algorithm>
+#include <cmath>
+
 #include <V3d_View.hxx>
 
 std::optional<gp_Pnt> GeomCalculator::CalculatorRayIntsPlane(const gp_Ax1 &ray, const gp_Pln &plane) {
@@ -81,6 +85,160 @@ bool GeomCalculator::RayIntersectBox(const Bnd_Box &box, const gp_Lin &ray, doub
     }
 
     return true;
+}
+
+std::optional<GeomCalculator::RayTriangleHit> GeomCalculator::RayIntersectTriangle(const gp_Lin &ray,
+                                                                                   const gp_XYZ &v0,
+                                                                                   const gp_XYZ &v1,
+                                                                                   const gp_XYZ &v2) {
+    constexpr double epsilon = 1.0e-9;
+
+    const gp_XYZ origin = ray.Location().XYZ();
+    const gp_XYZ direction = ray.Direction().XYZ();
+    const gp_XYZ edge1 = v1 - v0;
+    const gp_XYZ edge2 = v2 - v0;
+    const gp_XYZ pvec = direction.Crossed(edge2);
+    const double det = edge1.Dot(pvec);
+    if (std::abs(det) < epsilon) {
+        return std::nullopt;
+    }
+
+    const double invDet = 1.0 / det;
+    const gp_XYZ tvec = origin - v0;
+    const double u = tvec.Dot(pvec) * invDet;
+    if (u < 0.0 || u > 1.0) {
+        return std::nullopt;
+    }
+
+    const gp_XYZ qvec = tvec.Crossed(edge1);
+    const double v = direction.Dot(qvec) * invDet;
+    if (v < 0.0 || u + v > 1.0) {
+        return std::nullopt;
+    }
+
+    const double distance = edge2.Dot(qvec) * invDet;
+    if (distance < 0.0) {
+        return std::nullopt;
+    }
+
+    gp_XYZ normal = edge1.Crossed(edge2);
+    if (normal.SquareModulus() > epsilon) {
+        normal.Normalize();
+    }
+
+    RayTriangleHit hit;
+    hit.distance = distance;
+    hit.u = u;
+    hit.v = v;
+    hit.point = ray.Location().Translated(ray.Direction().XYZ() * distance);
+    hit.normal = normal;
+    return hit;
+}
+
+std::optional<GeomCalculator::RayPointHit> GeomCalculator::RayIntersectPoint(const gp_Lin &ray,
+                                                                             const gp_XYZ &point,
+                                                                             double tolerance) {
+    if (tolerance <= 0.0) {
+        return std::nullopt;
+    }
+
+    const gp_XYZ origin = ray.Location().XYZ();
+    const gp_XYZ direction = ray.Direction().XYZ();
+    const gp_XYZ center = point;
+    const gp_XYZ offset = origin - center;
+
+    const double a = direction.Dot(direction);
+    const double b = 2.0 * direction.Dot(offset);
+    const double c = offset.Dot(offset) - tolerance * tolerance;
+    const double discriminant = b * b - 4.0 * a * c;
+    if (discriminant < 0.0) {
+        return std::nullopt;
+    }
+
+    const double sqrtDiscriminant = std::sqrt(discriminant);
+    double t0 = (-b - sqrtDiscriminant) / (2.0 * a);
+    double t1 = (-b + sqrtDiscriminant) / (2.0 * a);
+    if (t0 > t1) {
+        std::swap(t0, t1);
+    }
+
+    double distance = t0;
+    if (distance < 0.0) {
+        distance = t1;
+    }
+    if (distance < 0.0) {
+        return std::nullopt;
+    }
+
+    RayPointHit hit;
+    hit.distance = distance;
+    hit.point = ray.Location().Translated(ray.Direction().XYZ() * distance);
+    return hit;
+}
+
+std::optional<GeomCalculator::RaySegmentHit> GeomCalculator::RayIntersectSegment(const gp_Lin &ray,
+                                                                                 const gp_XYZ &start,
+                                                                                 const gp_XYZ &end,
+                                                                                 double tolerance) {
+    if (tolerance <= 0.0) {
+        return std::nullopt;
+    }
+
+    const gp_XYZ origin = ray.Location().XYZ();
+    const gp_XYZ direction = ray.Direction().XYZ();
+    const gp_XYZ segment = end - start;
+    const double segmentLengthSquared = segment.SquareModulus();
+    if (segmentLengthSquared <= gp::Resolution()) {
+        const auto pointHit = RayIntersectPoint(ray, start, tolerance);
+        if (!pointHit.has_value()) {
+            return std::nullopt;
+        }
+
+        RaySegmentHit hit;
+        hit.distance = pointHit->distance;
+        hit.segmentParameter = 0.0;
+        hit.closestDistance = ray.Location().Distance(gp_Pnt(start));
+        hit.point = pointHit->point;
+        hit.segmentPoint = gp_Pnt(start);
+        return hit;
+    }
+
+    const gp_XYZ w = origin - start;
+    const double a = direction.Dot(direction);
+    const double b = direction.Dot(segment);
+    const double c = segment.Dot(segment);
+    const double d = direction.Dot(w);
+    const double e = segment.Dot(w);
+    const double denominator = a * c - b * b;
+
+    double segmentParameter = 0.0;
+    if (std::abs(denominator) > 1.0e-12) {
+        segmentParameter = std::clamp((a * e - b * d) / denominator, 0.0, 1.0);
+    } else {
+        segmentParameter = std::clamp(-e / c, 0.0, 1.0);
+    }
+
+    gp_XYZ segmentPoint = start + segment * segmentParameter;
+    double rayDistance = direction.Dot(segmentPoint - origin) / a;
+    if (rayDistance < 0.0) {
+        rayDistance = 0.0;
+        segmentParameter = std::clamp(-e / c, 0.0, 1.0);
+        segmentPoint = start + segment * segmentParameter;
+    }
+
+    const gp_XYZ rayPoint = origin + direction * rayDistance;
+    const double closestDistance = gp_Pnt(rayPoint).Distance(gp_Pnt(segmentPoint));
+    if (closestDistance > tolerance) {
+        return std::nullopt;
+    }
+
+    RaySegmentHit hit;
+    hit.distance = rayDistance;
+    hit.segmentParameter = segmentParameter;
+    hit.closestDistance = closestDistance;
+    hit.point = gp_Pnt(rayPoint);
+    hit.segmentPoint = gp_Pnt(segmentPoint);
+    return hit;
 }
 
 gp_Ax1 GeomCalculator::GetMouseScreenRay(int x, int y, const opencascade::handle<V3d_View> &view) {

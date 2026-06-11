@@ -58,6 +58,10 @@ Bnd_Box Element::GetBoundingBox() const {
     return box;
 }
 
+ElementMesh Element::BuildElementMesh() const {
+    return ElementMeshBuilder::BuildFromShape(BuildShape());
+}
+
 PropertySet &Element::Properties() {
     return m_Properties;
 }

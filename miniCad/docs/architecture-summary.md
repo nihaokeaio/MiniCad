@@ -210,7 +210,7 @@ Current custom picking flow:
 ```text
 MouseRelease
   -> GeomCalculator::GetMouseScreenRay
-  -> ScenePicker::PickByBoundingBox
+  -> ScenePicker::Pick
   -> Scene::GetPickCandidates
   -> GeomCalculator::RayIntersectBox
   -> nearest ElementId

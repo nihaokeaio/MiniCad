@@ -12,6 +12,7 @@ void Scene::AddOrUpdate(const Element &element) {
     object->localTransform = element.GetLocalTransform();
     object->worldTransform = object->localTransform;
     object->boundingBox = element.GetBoundingBox();
+    object->pickGeometry = element.BuildElementMesh();
     m_Objects[object->elementId] = std::move(object);
 }
 

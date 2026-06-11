@@ -17,9 +17,7 @@ class CadController {
 public:
     CadController(Document *document, CommandManager *commandManager);
 
-    void CreateBox() const;
-
-    void CreateCylinder() const;
+    void CreateElement(ElementType elementType) const;
 
     void CreateElement(const ElementCreateParams &params) const;
 

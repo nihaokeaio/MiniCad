@@ -17,12 +17,8 @@ CadController::CadController(Document *document, CommandManager *commandManager)
     assert(m_CommandManager != nullptr);
 }
 
-void CadController::CreateBox() const {
-    CreateElement(ElementCreateParams{ElementType::Box, {}});
-}
-
-void CadController::CreateCylinder() const {
-    CreateElement(ElementCreateParams{ElementType::Cylinder, {}});
+void CadController::CreateElement(ElementType elementType) const {
+    CreateElement(ElementCreateParams{elementType, {}});
 }
 
 void CadController::CreateElement(const ElementCreateParams &params) const {

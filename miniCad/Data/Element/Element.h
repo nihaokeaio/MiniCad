@@ -10,6 +10,7 @@
 
 #include "../Document.h"
 #include "ElementId.h"
+#include "../ElementMesh/ElementMesh.h"
 #include "../Geometry/GeometryTypes.h"
 #include "../Property/PropertySet.h"
 
@@ -35,6 +36,8 @@ public:
      [[nodiscard]] virtual Bnd_Box GetBoundingBox() const;
 
      [[nodiscard]] virtual TopoDS_Shape BuildShape() const = 0;
+
+     [[nodiscard]] virtual ElementMesh BuildElementMesh() const;
 
      [[nodiscard]] GeometryTypes::RTransform GetLocalTransform() const;
 

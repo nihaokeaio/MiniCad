@@ -31,7 +31,7 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
     }
 
     const gp_Lin ray(GeomCalculator::GetMouseScreenRay(event->x(), event->y(), m_Context->m_View));
-    const auto pick = m_ScenePicker->PickByBoundingBox(ray);
+    const auto pick = m_ScenePicker->Pick(ray);
     m_Context->m_AisContext->ClearSelected(Standard_False);
 
     if (!pick.has_value()) {

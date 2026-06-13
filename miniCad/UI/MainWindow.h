@@ -13,6 +13,9 @@ public:
     MainWindow(AppContext *context);
 
 private:
+    void CreateRandomBenchmarkBoxes() const;
+
+private:
     AppContext *m_Context;
 };
 

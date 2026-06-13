@@ -25,8 +25,13 @@ public:
 
     [[nodiscard]] bool Contains(ElementId elementId) const;
 
+    [[nodiscard]] std::vector<PickObject> BuildPickObjects() const;
+
+    [[nodiscard]] uint64_t GetVersion() const;
+
     void Clear();
 
 private:
     std::unordered_map<ElementId, std::unique_ptr<SceneObject>> m_Objects;
+    uint64_t m_Version{0};
 };

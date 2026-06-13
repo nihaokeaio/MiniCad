@@ -5,12 +5,14 @@
 #include "SelectionHandler.h"
 
 #include <AIS_InteractiveContext.hxx>
+#include <QDebug>
 #include <QMouseEvent>
 
 #include "GeomCalculator.h"
 #include "../../Data/Element/ElementId.h"
 #include "InteractionManager.h"
 #include "SelectionManager.h"
+#include "Timer.h"
 #include "ViewObjectRegistry.h"
 #include "Picking/ScenePicker.h"
 
@@ -31,7 +33,23 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
     }
 
     const gp_Lin ray(GeomCalculator::GetMouseScreenRay(event->x(), event->y(), m_Context->m_View));
-    const auto pick = m_ScenePicker->Pick(ray);
+    PickSettings bvhSettings;
+    bvhSettings.usePrimitiveBvh = true;
+    Timer timer;
+    const auto pick = m_ScenePicker->Pick(PickQuery{ray, bvhSettings});
+    const auto bvhUs = timer.StopMicroseconds(true);
+
+    PickSettings linearSettings;
+    linearSettings.usePrimitiveBvh = false;
+    const auto linearPick = m_ScenePicker->Pick(PickQuery{ray, linearSettings});
+    const auto linearUs = timer.StopMicroseconds();
+
+    qDebug() << "[PickBenchmark]"
+             << "BVH:" << bvhUs << "us"
+             << "Linear:" << linearUs << "us"
+             << "BVH hit:" << (pick.has_value() ? pick->elementId.GetValue() : 0)
+             << "Linear hit:" << (linearPick.has_value() ? linearPick->elementId.GetValue() : 0);
+
     m_Context->m_AisContext->ClearSelected(Standard_False);
 
     if (!pick.has_value()) {

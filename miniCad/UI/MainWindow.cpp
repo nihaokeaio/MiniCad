@@ -5,12 +5,22 @@
 #include "MainWindow.h"
 
 #include "AppContext.h"
+#include <QDebug>
 #include <QToolBar>
 
+#include <QElapsedTimer>
+#include <random>
+#include <utility>
+
 #include "CadView.h"
+#include "Document.h"
 #include "../Data/Element/Element.h"
+#include "../Data/Element/ElementFactory.h"
+#include "../Data/Geometry/GeometryTypes.h"
 #include "Controller/CadController.h"
 #include "Controller/Interaction/InteractionManager.h"
+
+#include <gp_Vec.hxx>
 
 MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     auto toolbar = addToolBar("Main Toolbar");
@@ -20,6 +30,7 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     auto createPoint = toolbar->addAction("Point");
     auto createSegment = toolbar->addAction("Segment");
     auto addBoxWidth = toolbar->addAction("AddBoxWidth");
+    auto randomBenchmark = toolbar->addAction("Random10K");
     auto undo = toolbar->addAction("Undo");
     auto redo = toolbar->addAction("Redo");
 
@@ -55,10 +66,45 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
 
         context->GetCadController()->ChangeElementProperty(selectedId, "Width", PropertyValue(width + 10));
     });
+    QObject::connect(randomBenchmark, &QAction::triggered, this, [this]() {
+        CreateRandomBenchmarkBoxes();
+    });
     QObject::connect(undo, &QAction::triggered, this, [context]() {
         context->GetCadController()->Undo();
     });
     QObject::connect(redo, &QAction::triggered, this, [context]() {
         context->GetCadController()->Redo();
     });
+}
+
+void MainWindow::CreateRandomBenchmarkBoxes() const {
+    constexpr int modelCount = 1000;
+    std::mt19937 rng{42};
+    std::uniform_real_distribution<double> positionDist{-5000.0, 5000.0};
+    std::uniform_real_distribution<double> sizeDist{20.0, 80.0};
+
+    QElapsedTimer timer;
+    timer.start();
+
+    auto document = m_Context->GetDocument();
+    for (int index = 0; index < modelCount; ++index) {
+        auto element = ElementFactory::Create(ElementType::Box);
+        if (!element) {
+            continue;
+        }
+
+        element->Properties().Set("Length", PropertyValue(sizeDist(rng)));
+        element->Properties().Set("Width", PropertyValue(sizeDist(rng)));
+        element->Properties().Set("Height", PropertyValue(sizeDist(rng)));
+
+        GeometryTypes::RTransform transform;
+        transform.SetTranslation(gp_Vec(positionDist(rng), positionDist(rng), positionDist(rng) * 0.1));
+        element->Properties().Set("LocalTransform", PropertyValue(transform));
+
+        document->RegisterElement(std::move(element));
+    }
+
+    qDebug() << "[PickBenchmark]"
+            << "created random boxes:" << modelCount
+            << "elapsed:" << timer.elapsed() << "ms";
 }

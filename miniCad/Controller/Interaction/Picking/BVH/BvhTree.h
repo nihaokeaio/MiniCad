@@ -76,32 +76,15 @@ namespace Picking {
         };
 
         [[nodiscard]] static gp_XYZ BoxCenter(const Bnd_Box &box) {
-            Standard_Real xmin = 0.0;
-            Standard_Real ymin = 0.0;
-            Standard_Real zmin = 0.0;
-            Standard_Real xmax = 0.0;
-            Standard_Real ymax = 0.0;
-            Standard_Real zmax = 0.0;
-            box.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-            return {(xmin + xmax) * 0.5, (ymin + ymax) * 0.5, (zmin + zmax) * 0.5};
+            return (box.CornerMin().XYZ() + box.CornerMax().XYZ()) * 0.5;
         }
 
         [[nodiscard]] static Axis LongestAxis(const Bnd_Box &box) {
-            Standard_Real xmin = 0.0;
-            Standard_Real ymin = 0.0;
-            Standard_Real zmin = 0.0;
-            Standard_Real xmax = 0.0;
-            Standard_Real ymax = 0.0;
-            Standard_Real zmax = 0.0;
-            box.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-
-            const double dx = xmax - xmin;
-            const double dy = ymax - ymin;
-            const double dz = zmax - zmin;
-            if (dx >= dy && dx >= dz) {
+            const gp_XYZ diagonal = box.CornerMax().XYZ() - box.CornerMin().XYZ();
+            if (diagonal.X() >= diagonal.Y() && diagonal.X() >= diagonal.Z()) {
                 return Axis::X;
             }
-            if (dy >= dz) {
+            if (diagonal.Y() >= diagonal.Z()) {
                 return Axis::Y;
             }
             return Axis::Z;

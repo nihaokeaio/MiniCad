@@ -8,11 +8,11 @@
 
 #include "../ElementCreateParams.h"
 
-class PreviewAdaptor;
+class ViewStateAdaptor;
 
 class PreviewManager {
 public:
-    explicit PreviewManager(PreviewAdaptor *adaptor);
+    explicit PreviewManager(ViewStateAdaptor *adaptor);
 
     void BeginElementPreview(const ElementCreateParams &params);
 
@@ -24,6 +24,6 @@ public:
 
 private:
     bool m_IsPreviewState = false;
-    PreviewAdaptor *m_Adaptor = nullptr;
+    ViewStateAdaptor *m_Adaptor = nullptr;
     ElementCreateParams m_Params{ElementType::Box, {}};
 };

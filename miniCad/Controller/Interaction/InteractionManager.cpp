@@ -16,8 +16,8 @@ InteractionContext::InteractionContext(const opencascade::handle<AIS_Interactive
                                        const opencascade::handle<V3d_View> &view, Document *document,
                                        ViewObjectRegistry *registry,
                                        SelectionManager *selectionManager, CadController *controller,
-                                       PreviewManager *previewManager, CoordinateResolver *coordinateResolver,
-                                       Scene *scene)
+                                       PreviewManager *previewManager, ViewStateAdaptor *viewStateAdaptor,
+                                       CoordinateResolver *coordinateResolver, Scene *scene)
     : m_AisContext(aisContext),
       m_View(view),
       m_Document(document),
@@ -25,6 +25,7 @@ InteractionContext::InteractionContext(const opencascade::handle<AIS_Interactive
       m_Selection(selectionManager),
       m_Controller(controller),
       m_PreviewManager(previewManager),
+      m_ViewStateAdaptor(viewStateAdaptor),
       m_CoordinateResolver(coordinateResolver),
       m_Scene(scene) {
 }

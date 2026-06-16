@@ -7,7 +7,6 @@
 #include <qevent.h>
 #include "CadView.h"
 #include "Document.h"
-#include "PreviewAdaptor.h"
 #include "Controller/CadController.h"
 #include "Controller/Command/CommandManager.h"
 #include "Controller/Interaction/CoordinateResolver.h"
@@ -18,6 +17,7 @@
 #include "Presentation/DocumentObserver.h"
 #include "Presentation/ViewAdaptor.h"
 #include "Presentation/ViewObjectRegistry.h"
+#include "Presentation/ViewStateAdaptor.h"
 #include "Scene/Scene.h"
 
 IMPLEMENT_SINGLETON(AppContext)
@@ -31,7 +31,7 @@ void AppContext::Initialize() {
     m_Registry = std::make_unique<ViewObjectRegistry>();
     m_View = new CadView(m_Document.get(), m_Registry.get(), m_Selection.get());
     m_Adaptor = std::make_unique<ViewAdaptor>(m_View->GetContext(), m_Registry.get(), m_Document.get());
-    m_PreviewAdaptor = std::make_unique<PreviewAdaptor>(m_View->GetContext());
+    m_ViewStateAdaptor = std::make_unique<ViewStateAdaptor>(m_View->GetContext(), m_Registry.get());
     m_ReferenceOverlay = std::make_unique<ReferenceOverlay>(m_View->GetContext());
     m_ReferenceOverlay->ShowGrid(true);
     m_ReferenceOverlay->ShowAxes(true);
@@ -39,7 +39,7 @@ void AppContext::Initialize() {
     m_DocumentObserver = std::make_unique<DocumentObserver>(m_Document.get(), m_Adaptor.get(), m_Scene.get());
     m_CommandManager = std::make_unique<CommandManager>();
     m_CadController = std::make_unique<CadController>(m_Document.get(), m_CommandManager.get());
-    m_PreviewManager = std::make_unique<PreviewManager>(m_PreviewAdaptor.get());
+    m_PreviewManager = std::make_unique<PreviewManager>(m_ViewStateAdaptor.get());
     m_InteractionManager = std::make_unique<InteractionManager>(std::make_unique<InteractionContext>(
         m_View->GetContext(),
         m_View->GetView(),
@@ -48,6 +48,7 @@ void AppContext::Initialize() {
         m_Selection.get(),
         m_CadController.get(),
         m_PreviewManager.get(),
+        m_ViewStateAdaptor.get(),
         m_CoordinateResolver.get(),
         m_Scene.get()
     ));

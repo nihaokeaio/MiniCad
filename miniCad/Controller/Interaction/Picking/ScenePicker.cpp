@@ -48,18 +48,24 @@ std::optional<PickResult> ScenePicker::Pick(const PickQuery &query) {
             continue;
         }
 
-        PickResult candidate = MakeObjectPick(elementId, query, tmin);
-        if (!object->pickGeometry.Empty()) {
+        std::optional<PickResult> candidate;
+        if (Picking::Allows(query.settings.pickMask, MeshPrimitiveType::Object)) {
+            candidate = MakeObjectPick(elementId, query, tmin);
+        }
+
+        if (Picking::AllowsPrimitive(query.settings.pickMask) && !object->pickGeometry.Empty()) {
             const gp_Trsf worldToLocal = object->worldTransform.Inverted();
             PickQuery localQuery{query.ray.Transformed(worldToLocal), query.settings};
             if (const auto primitiveHit = m_PrimitivePicker.Pick(localQuery, *object)) {
                 candidate = *primitiveHit;
-            } else if (object->pickGeometry.triangles.empty()) {
+            } else if (!candidate.has_value() || object->pickGeometry.triangles.empty()) {
                 continue;
             }
         }
 
-        Picking::UpdateBestPick(best, candidate);
+        if (candidate.has_value()) {
+            Picking::UpdateBestPick(best, *candidate);
+        }
     }
     ///线性遍历
 #ifdef Debug
@@ -78,18 +84,24 @@ std::optional<PickResult> ScenePicker::Pick(const PickQuery &query) {
             continue;
         }
 
-        PickResult candidate = MakeObjectPick(elementId, query, tmin);
-        if (!object->pickGeometry.Empty()) {
+        std::optional<PickResult> candidate;
+        if (Picking::Allows(query.settings.pickMask, MeshPrimitiveType::Object)) {
+            candidate = MakeObjectPick(elementId, query, tmin);
+        }
+
+        if (Picking::AllowsPrimitive(query.settings.pickMask) && !object->pickGeometry.Empty()) {
             const gp_Trsf worldToLocal = object->worldTransform.Inverted();
             PickQuery localQuery{query.ray.Transformed(worldToLocal), query.settings};
             if (const auto primitiveHit = m_PrimitivePicker.Pick(localQuery, *object)) {
                 candidate = *primitiveHit;
-            } else if (object->pickGeometry.triangles.empty()) {
+            } else if (!candidate.has_value() || object->pickGeometry.triangles.empty()) {
                 continue;
             }
         }
 
-        Picking::UpdateBestPick(best, candidate);
+        if (candidate.has_value()) {
+            Picking::UpdateBestPick(best, *candidate);
+        }
     }
 #endif
 
@@ -98,8 +110,7 @@ std::optional<PickResult> ScenePicker::Pick(const PickQuery &query) {
 
 PickResult ScenePicker::MakeObjectPick(ElementId elementId, const PickQuery &query, double distance) {
     PickResult result;
-    result.elementId = elementId;
-    result.primitiveType = MeshPrimitiveType::Object;
+    result.pickTarget = PickTarget{elementId, MeshPrimitiveType::Object, InvalidPrimitiveIndex};
     result.distance = distance;
     result.hitPoint = query.ray.Location().Translated(query.ray.Direction().XYZ() * distance);
     return result;

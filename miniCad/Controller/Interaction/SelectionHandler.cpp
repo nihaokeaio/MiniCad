@@ -4,7 +4,6 @@
 
 #include "SelectionHandler.h"
 
-#include <AIS_InteractiveContext.hxx>
 #include <QDebug>
 #include <QMouseEvent>
 
@@ -13,7 +12,7 @@
 #include "InteractionManager.h"
 #include "SelectionManager.h"
 #include "Timer.h"
-#include "ViewObjectRegistry.h"
+#include "Presentation/ViewStateAdaptor.h"
 #include "Picking/ScenePicker.h"
 
 SelectionHandler::SelectionHandler(InteractionContext *context) : InteractionHandler(context) {
@@ -47,23 +46,20 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
     qDebug() << "[PickBenchmark]"
              << "BVH:" << bvhUs << "us"
              << "Linear:" << linearUs << "us"
-             << "BVH hit:" << (pick.has_value() ? pick->elementId.GetValue() : 0)
-             << "Linear hit:" << (linearPick.has_value() ? linearPick->elementId.GetValue() : 0);
-
-    m_Context->m_AisContext->ClearSelected(Standard_False);
+             << "BVH hit:" << (pick.has_value() ? pick->pickTarget.elementId.GetValue() : 0)
+             << "Linear hit:" << (linearPick.has_value() ? linearPick->pickTarget.elementId.GetValue() : 0);
 
     if (!pick.has_value()) {
         m_Context->m_Selection->Clear();
-        m_Context->m_AisContext->UpdateCurrentViewer();
+        if (m_Context->m_ViewStateAdaptor) {
+            m_Context->m_ViewStateAdaptor->ClearSelection();
+        }
         return true;
     }
 
-    m_Context->m_Selection->SetSelected(pick->elementId);
-    for (const auto &aisObject: m_Context->m_Registry->FindElementAisObjects(pick->elementId)) {
-        if (!aisObject.IsNull()) {
-            m_Context->m_AisContext->SetSelected(aisObject, Standard_False);
-        }
+    m_Context->m_Selection->SetSelected(pick->pickTarget);
+    if (m_Context->m_ViewStateAdaptor) {
+        m_Context->m_ViewStateAdaptor->ApplySelection(*m_Context->m_Selection);
     }
-    m_Context->m_AisContext->UpdateCurrentViewer();
     return true;
 }

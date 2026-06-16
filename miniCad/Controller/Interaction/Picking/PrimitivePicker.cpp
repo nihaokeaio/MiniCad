@@ -25,6 +25,10 @@ std::optional<PickResult> PrimitivePicker::Pick(const PickQuery &localQuery, con
         }
 
         const auto &primitive = object.pickPrimitives[primitiveVectorIndex];
+        if (!Picking::Allows(localQuery.settings.pickMask, primitive.primitiveType)) {
+            continue;
+        }
+
         std::optional<PickResult> candidate;
         switch (primitive.primitiveType) {
             case MeshPrimitiveType::Point:
@@ -75,9 +79,7 @@ std::optional<PickResult> PrimitivePicker::PickPoint(const PickQuery &localQuery
     const gp_Pnt worldRayPoint = hit->point.Transformed(object.worldTransform);
 
     PickResult result;
-    result.elementId = object.elementId;
-    result.primitiveType = MeshPrimitiveType::Point;
-    result.primitiveIndex = primitive.primitiveIndex;
+    result.pickTarget = PickTarget{object.elementId, MeshPrimitiveType::Point, primitive.primitiveIndex};
     result.hitPoint = gp_Pnt(mesh.vertices[vertexIndex].position).Transformed(object.worldTransform);
     result.distance = worldRayOrigin.Distance(worldRayPoint);
     return result;
@@ -109,9 +111,7 @@ std::optional<PickResult> PrimitivePicker::PickSegment(const PickQuery &localQue
     const gp_Pnt worldRayPoint = hit->point.Transformed(object.worldTransform);
 
     PickResult result;
-    result.elementId = object.elementId;
-    result.primitiveType = MeshPrimitiveType::Segment;
-    result.primitiveIndex = primitive.primitiveIndex;
+    result.pickTarget = PickTarget{object.elementId, MeshPrimitiveType::Segment, primitive.primitiveIndex};
     result.hitPoint = hit->segmentPoint.Transformed(object.worldTransform);
     result.distance = worldRayOrigin.Distance(worldRayPoint);
     return result;
@@ -144,9 +144,7 @@ std::optional<PickResult> PrimitivePicker::PickTriangle(const PickQuery &localQu
     const gp_Pnt worldRayOrigin = localQuery.ray.Location().Transformed(object.worldTransform);
 
     PickResult result;
-    result.elementId = object.elementId;
-    result.primitiveType = MeshPrimitiveType::Triangle;
-    result.primitiveIndex = primitive.primitiveIndex;
+    result.pickTarget = PickTarget{object.elementId, MeshPrimitiveType::Triangle, primitive.primitiveIndex};
     result.hitPoint = hit->point.Transformed(object.worldTransform);
     result.distance = worldRayOrigin.Distance(result.hitPoint);
     return result;

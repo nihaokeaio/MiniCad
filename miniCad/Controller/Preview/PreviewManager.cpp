@@ -7,9 +7,9 @@
 #include "../../Data/Element/Element.h"
 #include "../../Data/Element/ElementFactory.h"
 #include "../../Data/Geometry/GeometryTypes.h"
-#include "Presentation/PreviewAdaptor.h"
+#include "Presentation/ViewStateAdaptor.h"
 
-PreviewManager::PreviewManager(PreviewAdaptor *adaptor) : m_Adaptor(adaptor) {
+PreviewManager::PreviewManager(ViewStateAdaptor *adaptor) : m_Adaptor(adaptor) {
 }
 
 void PreviewManager::BeginElementPreview(const ElementCreateParams &params) {
@@ -19,7 +19,7 @@ void PreviewManager::BeginElementPreview(const ElementCreateParams &params) {
     if (!element) {
         return;
     }
-    m_Adaptor->ShowShape(element->BuildShape());
+    m_Adaptor->ShowPreviewShape(element->BuildShape());
 }
 
 
@@ -34,13 +34,13 @@ void PreviewManager::UpdateElementPreview(const ElementCreateParams &params) con
         return;
     }
 
-    m_Adaptor->UpdateTransform(transform);
+    m_Adaptor->UpdatePreviewTransform(transform);
 }
 
 
 void PreviewManager::ExitPreviewState() {
     m_IsPreviewState = false;
-    m_Adaptor->Clear();
+    m_Adaptor->ClearPreview();
 }
 
 bool PreviewManager::IsPreviewState() const {

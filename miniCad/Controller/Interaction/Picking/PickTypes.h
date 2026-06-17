@@ -37,7 +37,6 @@ struct PickSettings {
     double pointTolerance{2.0};
     double segmentTolerance{2.0};
     double broadPhaseTolerance{2.0};
-    bool usePrimitiveBvh{true};
     PickMask pickMask{PickMask::Any};
 };
 

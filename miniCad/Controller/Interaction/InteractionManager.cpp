@@ -11,6 +11,7 @@
 #include "SelectionHandler.h"
 #include "SelectionManager.h"
 #include "ViewController.h"
+#include "Tools/TransformElementTool.h"
 
 InteractionContext::InteractionContext(const opencascade::handle<AIS_InteractiveContext> &aisContext,
                                        const opencascade::handle<V3d_View> &view, Document *document,
@@ -57,6 +58,10 @@ void InteractionManager::SetCreateElementTool(ElementType elementType, bool cont
     m_ActiveHandler = std::make_unique<CreateElementTool>(m_Context.get(), elementType, continuous);
 }
 
+void InteractionManager::SetMoveTool() {
+    SetActiveHandler(std::make_unique<TransformElementTool>(m_Context.get()));
+}
+
 void InteractionManager::MousePress(QMouseEvent *event) {
     if (DispatchGlobalMousePress(event)) {
         return;
@@ -94,8 +99,11 @@ void InteractionManager::Wheel(QWheelEvent *event) {
     }
 }
 
-void InteractionManager::KeyPress(const QKeyEvent *event) const {
+void InteractionManager::KeyPress(const QKeyEvent *event) {
     switch (event->key()) {
+        case Qt::Key_Escape:
+            SetSelectionHandler();
+            break;
         case Qt::Key_F:
             if (m_Context->m_Selection->HasSelection()) {
                 m_ViewController->FocusSelection();

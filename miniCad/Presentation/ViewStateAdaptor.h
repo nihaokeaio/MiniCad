@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include <memory>
 #include <Standard_Handle.hxx>
 #include <gp_Trsf.hxx>
+
+#include "TransformPreviewAdaptor.h"
 
 class AIS_InteractiveContext;
 class AIS_Shape;
@@ -29,10 +32,13 @@ public:
 
     void ClearSelection() const;
 
+    void ApplyElementTransforms(const std::vector<ElementViewTransform> &transforms) const;
+
 private:
     void ClearSelection(bool updateViewer) const;
 
     Handle(AIS_InteractiveContext) m_Context;
     ViewObjectRegistry *m_Registry = nullptr;
     Handle(AIS_Shape) m_PreviewAis;
+    std::unique_ptr<TransformPreviewAdaptor> m_TransformPreviewAdaptor;
 };

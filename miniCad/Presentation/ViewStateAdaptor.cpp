@@ -12,7 +12,9 @@
 #include <TopoDS_Shape.hxx>
 
 ViewStateAdaptor::ViewStateAdaptor(const Handle(AIS_InteractiveContext) &context, ViewObjectRegistry *registry)
-    : m_Context(context), m_Registry(registry) {
+    : m_Context(context),
+      m_Registry(registry),
+      m_TransformPreviewAdaptor(std::make_unique<TransformPreviewAdaptor>(context, registry)) {
 }
 
 void ViewStateAdaptor::ShowPreviewShape(const TopoDS_Shape &shape) {
@@ -79,4 +81,8 @@ void ViewStateAdaptor::ClearSelection(bool updateViewer) const {
     if (updateViewer) {
         m_Context->UpdateCurrentViewer();
     }
+}
+
+void ViewStateAdaptor::ApplyElementTransforms(const std::vector<ElementViewTransform> &transforms) const {
+    m_TransformPreviewAdaptor->Apply(transforms);
 }

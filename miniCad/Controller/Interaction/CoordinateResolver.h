@@ -19,6 +19,8 @@ public:
 
     std::optional<GeometryTypes::Point3D> ScreenToWorkPlane(int x, int y) const;
 
+    std::optional<GeometryTypes::Point3D> ScreenToPlane(int x, int y, const gp_Pln &plane) const;
+
 private:
     Handle(V3d_View) m_View;
     gp_Pln m_WorkPlan;

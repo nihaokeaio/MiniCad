@@ -15,7 +15,7 @@
 std::optional<PickResult> PrimitivePicker::Pick(const PickQuery &localQuery, const SceneObject &object) const {
     std::optional<PickResult> best;
 
-    const auto primitiveIndices = (!localQuery.settings.usePrimitiveBvh || object.primitiveBvh.Empty())
+    const auto primitiveIndices = object.primitiveBvh.Empty()
                                       ? LinearPrimitiveIndices(object)
                                       : object.primitiveBvh.Query(localQuery);
 

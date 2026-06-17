@@ -9,6 +9,7 @@
 #include "Command/ChangePropertyCommand.h"
 #include "Command/CommandManager.h"
 #include "Command/CreateElementCommand.h"
+#include "Command/TransformElementsCommand.h"
 #include "Document.h"
 
 CadController::CadController(Document *document, CommandManager *commandManager)
@@ -27,6 +28,13 @@ void CadController::CreateElement(const ElementCreateParams &params) const {
 
 void CadController::ChangeElementProperty(ElementId id, const std::string &key, const PropertyValue &value) {
     m_CommandManager->ExecuteCommand(std::make_unique<ChangePropertyCommand>(m_Document, id, key, value));
+}
+
+void CadController::TransformElements(const std::vector<ElementTransformChange> &changes) const {
+    if (changes.empty()) {
+        return;
+    }
+    m_CommandManager->ExecuteCommand(std::make_unique<TransformElementsCommand>(m_Document, changes));
 }
 
 void CadController::Undo() const {

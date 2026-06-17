@@ -31,6 +31,7 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     auto createSegment = toolbar->addAction("Segment");
     auto addBoxWidth = toolbar->addAction("AddBoxWidth");
     auto randomBenchmark = toolbar->addAction("Random10K");
+    auto moveTool = toolbar->addAction("MoveTool");
     auto undo = toolbar->addAction("Undo");
     auto redo = toolbar->addAction("Redo");
 
@@ -66,6 +67,11 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
 
         context->GetCadController()->ChangeElementProperty(selectedId, "Width", PropertyValue(width + 10));
     });
+
+    QObject::connect(moveTool, &QAction::triggered, this, [context]() {
+        context->GetInteractionManager()->SetMoveTool();
+    });
+
     QObject::connect(randomBenchmark, &QAction::triggered, this, [this]() {
         CreateRandomBenchmarkBoxes();
     });

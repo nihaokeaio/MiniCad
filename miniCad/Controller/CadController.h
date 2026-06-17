@@ -4,6 +4,7 @@
 
 #pragma once
 #include <string>
+#include <vector>
 
 #include "ElementCreateParams.h"
 #include "../Data/Element/ElementId.h"
@@ -12,6 +13,7 @@
 
 class CommandManager;
 class Document;
+struct ElementTransformChange;
 
 class CadController {
 public:
@@ -22,6 +24,8 @@ public:
     void CreateElement(const ElementCreateParams &params) const;
 
     void ChangeElementProperty(ElementId id, const std::string &key, const PropertyValue &value);
+
+    void TransformElements(const std::vector<ElementTransformChange> &changes) const;
 
     void Undo() const;
 

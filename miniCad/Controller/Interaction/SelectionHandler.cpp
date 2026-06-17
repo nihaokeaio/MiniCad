@@ -33,13 +33,12 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
 
     const gp_Lin ray(GeomCalculator::GetMouseScreenRay(event->x(), event->y(), m_Context->m_View));
     PickSettings bvhSettings;
-    bvhSettings.usePrimitiveBvh = true;
     Timer timer;
     const auto pick = m_ScenePicker->Pick(PickQuery{ray, bvhSettings});
     const auto bvhUs = timer.StopMicroseconds(true);
 
+
     PickSettings linearSettings;
-    linearSettings.usePrimitiveBvh = false;
     const auto linearPick = m_ScenePicker->Pick(PickQuery{ray, linearSettings});
     const auto linearUs = timer.StopMicroseconds();
 

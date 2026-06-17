@@ -14,8 +14,12 @@ CoordinateResolver::CoordinateResolver(const opencascade::handle<V3d_View> &view
 }
 
 std::optional<GeometryTypes::Point3D> CoordinateResolver::ScreenToWorkPlane(int x, int y) const {
+    return ScreenToPlane(x, y, m_WorkPlan);
+}
+
+std::optional<GeometryTypes::Point3D> CoordinateResolver::ScreenToPlane(int x, int y, const gp_Pln &plane) const {
     const auto ray = GeomCalculator::GetMouseScreenRay(x, y, m_View);
-    if (const auto result = GeomCalculator::CalculatorRayIntsPlane(ray, m_WorkPlan); result.has_value()) {
+    if (const auto result = GeomCalculator::CalculatorRayIntsPlane(ray, plane); result.has_value()) {
         return result.value().XYZ();
     }
     return std::nullopt;

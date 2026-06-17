@@ -64,6 +64,8 @@ public:
 
     void SetCreateElementTool(ElementType elementType, bool continuous = false);
 
+    void SetMoveTool();
+
 public:
     void MousePress(QMouseEvent *event);
 
@@ -73,7 +75,7 @@ public:
 
     void Wheel(QWheelEvent *event);
 
-    void KeyPress(const QKeyEvent *event) const;
+    void KeyPress(const QKeyEvent *event);
 
 private:
     bool DispatchGlobalMousePress(QMouseEvent *event) const;

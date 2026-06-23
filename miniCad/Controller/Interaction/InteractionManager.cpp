@@ -120,6 +120,8 @@ void InteractionManager::KeyPress(const QKeyEvent *event) {
         default:
             break;
     }
+    if (m_ActiveHandler->KeyPress(event))
+        return;
 }
 
 bool InteractionManager::DispatchGlobalMousePress(QMouseEvent *event) const {

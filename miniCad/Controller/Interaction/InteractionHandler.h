@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <qevent.h>
 
 struct InteractionContext;
 class QWheelEvent;
@@ -28,6 +29,8 @@ public:
     virtual bool MouseMove(QMouseEvent *event);
 
     virtual bool Wheel(QWheelEvent *event);
+
+    virtual bool KeyPress(const QKeyEvent *event);
 
 protected:
     InteractionContext *m_Context = nullptr;

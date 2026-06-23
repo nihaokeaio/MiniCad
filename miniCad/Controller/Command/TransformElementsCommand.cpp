@@ -24,7 +24,7 @@ void TransformElementsCommand::Redo() {
     Apply(true);
 }
 
-void TransformElementsCommand::Apply(bool useNewTransform) {
+void TransformElementsCommand::Apply(bool useNewTransform) const {
     for (const auto &change: m_Changes) {
         if (!change.elementId.IsValid()) {
             continue;

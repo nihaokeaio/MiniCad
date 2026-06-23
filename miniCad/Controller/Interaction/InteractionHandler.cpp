@@ -26,3 +26,7 @@ bool InteractionHandler::MouseMove(QMouseEvent *) {
 bool InteractionHandler::Wheel(QWheelEvent *) {
     return false;
 }
+
+bool InteractionHandler::KeyPress(const QKeyEvent *event) {
+    return false;
+}

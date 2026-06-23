@@ -28,7 +28,7 @@ public:
     void Redo() override;
 
 private:
-    void Apply(bool useNewTransform);
+    void Apply(bool useNewTransform) const;
 
     std::vector<ElementTransformChange> m_Changes;
 };

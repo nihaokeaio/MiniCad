@@ -8,7 +8,6 @@
 #include "SelectionManager.h"
 
 #include <algorithm>
-#include <cmath>
 #include <optional>
 #include <QMouseEvent>
 #include <unordered_set>
@@ -22,14 +21,17 @@
 #include "Controller/Interaction/InteractionManager.h"
 #include "Element/Element.h"
 #include "GeomCalculator.h"
-#include "Presentation/ViewStateAdaptor.h"
+#include "Presentation/ViewState/TransformGuideAdaptor.h"
+#include "Presentation/ViewState/ViewStateAdaptor.h"
+
+using namespace TransformElementSpace;
 
 namespace {
     constexpr double MinScaleFactor = 0.01;
     constexpr double ScaleSensitivity = 0.01;
 
     std::optional<Types::Point3f> SelectionCenter(Document *document, const std::unordered_set<ElementId> &selected) {
-        if (document == nullptr || selected.empty()) {
+        if (!document || selected.empty()) {
             return std::nullopt;
         }
 
@@ -53,15 +55,15 @@ namespace {
         return Types::Point3f((bounds.CornerMin().XYZ() + bounds.CornerMax().XYZ()) * 0.5);
     }
 
-    gp_Dir AxisDirection(TransformElementTool::TransformConstraint constraint) {
+    gp_Dir AxisDirection(TransformConstraint constraint) {
         switch (constraint) {
-            case TransformElementTool::TransformConstraint::XAxis:
+            case TransformConstraint::XAxis:
                 return gp::DX();
-            case TransformElementTool::TransformConstraint::YAxis:
+            case TransformConstraint::YAxis:
                 return gp::DY();
-            case TransformElementTool::TransformConstraint::ZAxis:
+            case TransformConstraint::ZAxis:
                 return gp::DZ();
-            case TransformElementTool::TransformConstraint::Free:
+            case TransformConstraint::Free:
             default:
                 return gp::DZ();
         }
@@ -228,6 +230,7 @@ bool TransformElementTool::BeginDrag(QMouseEvent *event) {
     }
 
     m_Session.state = TransformState::Dragging;
+    UpdateTransformGuideState();
     return true;
 }
 
@@ -384,6 +387,7 @@ void TransformElementTool::UpdateIntersectionPlane() {
             m_Session.constraintAxis = gp_Lin(m_Session.pivot, gp::DZ());
             m_Session.dragPlane = gp_Pln(m_Session.pivot, gp::DZ());
     }
+    UpdateTransformGuideState();
 }
 
 void TransformElementTool::RestoreOriginalTransforms() {
@@ -403,6 +407,7 @@ void TransformElementTool::ClearDragState() {
     m_Session.changes.clear();
     m_Session.state = TransformState::Idle;
     m_Session.constraint = TransformConstraint::Free;
+    UpdateTransformGuideState();
 }
 
 void TransformElementTool::CancelDragState() {
@@ -412,4 +417,13 @@ void TransformElementTool::CancelDragState() {
 
     RestoreOriginalTransforms();
     ClearDragState();
+}
+
+void TransformElementTool::UpdateTransformGuideState() const {
+    const auto transGuideState = std::make_shared<TransformGuideState>();
+    transGuideState->visible = m_Session.state == TransformState::Dragging;
+    transGuideState->pivot = m_Session.pivot;
+    transGuideState->constraint = m_Session.constraint;
+    transGuideState->mode = m_Session.mode;
+    m_Context->m_ViewStateAdaptor->ShowTransformGuide(transGuideState);
 }

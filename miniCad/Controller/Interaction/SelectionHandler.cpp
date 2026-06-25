@@ -12,7 +12,7 @@
 #include "InteractionManager.h"
 #include "SelectionManager.h"
 #include "Timer.h"
-#include "Presentation/ViewStateAdaptor.h"
+#include "Presentation/ViewState/ViewStateAdaptor.h"
 #include "Picking/ScenePicker.h"
 
 SelectionHandler::SelectionHandler(InteractionContext *context) : InteractionHandler(context) {

@@ -10,8 +10,7 @@
 #include <gp_Pln.hxx>
 #include <vector>
 
-class TransformElementTool : public InteractionHandler {
-public:
+namespace TransformElementSpace {
     enum class TransformState {
         Idle,
         Dragging
@@ -29,11 +28,16 @@ public:
         ZAxis,
         Free
     };
+}
+
+class TransformElementTool : public InteractionHandler {
+public:
 
     struct TransformSession {
-        TransformMode mode{TransformMode::Move}; // Move / Rotate / Scale
-        TransformConstraint constraint{TransformConstraint::Free}; // Free / X / Y / Z / XY / YZ / XZ
-        TransformState state{TransformState::Idle}; // Idle / Dragging
+        TransformElementSpace::TransformMode mode{TransformElementSpace::TransformMode::Move}; // Move / Rotate / Scale
+        TransformElementSpace::TransformConstraint constraint{TransformElementSpace::TransformConstraint::Free};
+        // Free / X / Y / Z / XY / YZ / XZ
+        TransformElementSpace::TransformState state{TransformElementSpace::TransformState::Idle}; // Idle / Dragging
 
         gp_Pnt pivot;
         gp_Pln dragPlane;
@@ -88,6 +92,8 @@ private:
     void ClearDragState();
 
     void CancelDragState();
+
+    void UpdateTransformGuideState() const;
 
     TransformSession m_Session;
 };

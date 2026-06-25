@@ -11,11 +11,14 @@
 #include <AIS_Shape.hxx>
 #include <TopoDS_Shape.hxx>
 
+#include "TransformGuideAdaptor.h"
+
 ViewStateAdaptor::ViewStateAdaptor(const Handle(AIS_InteractiveContext) &context, ViewObjectRegistry *registry)
     : m_Context(context),
-      m_Registry(registry),
-      m_TransformPreviewAdaptor(std::make_unique<TransformPreviewAdaptor>(context, registry)) {
+      m_Registry(registry) {
 }
+
+ViewStateAdaptor::~ViewStateAdaptor() = default;
 
 void ViewStateAdaptor::ShowPreviewShape(const TopoDS_Shape &shape) {
     if (shape.IsNull()) {
@@ -83,6 +86,16 @@ void ViewStateAdaptor::ClearSelection(bool updateViewer) const {
     }
 }
 
-void ViewStateAdaptor::ApplyElementTransforms(const std::vector<ElementViewTransform> &transforms) const {
+void ViewStateAdaptor::ApplyElementTransforms(const std::vector<ElementViewTransform> &transforms) {
+    if (!m_TransformPreviewAdaptor) {
+        m_TransformPreviewAdaptor = std::make_unique<TransformPreviewAdaptor>(m_Context, m_Registry);
+    }
     m_TransformPreviewAdaptor->Apply(transforms);
+}
+
+void ViewStateAdaptor::ShowTransformGuide(const std::shared_ptr<TransformGuideState> &transformGuideState) {
+    if (!m_TransformGuideAdaptor) {
+        m_TransformGuideAdaptor = std::make_unique<TransformGuideAdaptor>(m_Context);
+    }
+    m_TransformGuideAdaptor->ShowTransformGuide(transformGuideState);
 }

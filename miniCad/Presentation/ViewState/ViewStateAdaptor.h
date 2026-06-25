@@ -10,6 +10,8 @@
 
 #include "TransformPreviewAdaptor.h"
 
+struct TransformGuideState;
+class TransformGuideAdaptor;
 class AIS_InteractiveContext;
 class AIS_Shape;
 class SelectionManager;
@@ -19,6 +21,8 @@ class ViewObjectRegistry;
 class ViewStateAdaptor {
 public:
     ViewStateAdaptor(const Handle(AIS_InteractiveContext) &context, ViewObjectRegistry *registry);
+
+    ~ViewStateAdaptor();
 
     void ShowPreviewShape(const TopoDS_Shape &shape);
 
@@ -32,7 +36,9 @@ public:
 
     void ClearSelection() const;
 
-    void ApplyElementTransforms(const std::vector<ElementViewTransform> &transforms) const;
+    void ApplyElementTransforms(const std::vector<ElementViewTransform> &transforms);
+
+    void ShowTransformGuide(const std::shared_ptr<TransformGuideState> &transformGuideState);
 
 private:
     void ClearSelection(bool updateViewer) const;
@@ -41,4 +47,5 @@ private:
     ViewObjectRegistry *m_Registry = nullptr;
     Handle(AIS_Shape) m_PreviewAis;
     std::unique_ptr<TransformPreviewAdaptor> m_TransformPreviewAdaptor;
+    std::unique_ptr<TransformGuideAdaptor> m_TransformGuideAdaptor;
 };

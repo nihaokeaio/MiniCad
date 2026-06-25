@@ -17,15 +17,14 @@ InteractionContext::InteractionContext(const opencascade::handle<AIS_Interactive
                                        const opencascade::handle<V3d_View> &view, Document *document,
                                        ViewObjectRegistry *registry,
                                        SelectionManager *selectionManager, CadController *controller,
-                                       PreviewManager *previewManager, ViewStateAdaptor *viewStateAdaptor,
-                                       CoordinateResolver *coordinateResolver, Scene *scene)
+                                       ViewStateAdaptor *viewStateAdaptor, CoordinateResolver *coordinateResolver,
+                                       Scene *scene)
     : m_AisContext(aisContext),
       m_View(view),
       m_Document(document),
       m_Registry(registry),
       m_Selection(selectionManager),
       m_Controller(controller),
-      m_PreviewManager(previewManager),
       m_ViewStateAdaptor(viewStateAdaptor),
       m_CoordinateResolver(coordinateResolver),
       m_Scene(scene) {

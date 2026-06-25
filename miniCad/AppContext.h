@@ -13,7 +13,6 @@ class CoordinateResolver;
 class InteractionManager;
 class CommandManager;
 class CadController;
-class PreviewManager;
 class ReferenceOverlay;
 class CadView;
 class ViewAdaptor;
@@ -47,8 +46,6 @@ public:
 
     [[nodiscard]] InteractionManager *GetInteractionManager() const;
 
-    [[nodiscard]] PreviewManager *GetPreviewManager() const;
-
     [[nodiscard]] Scene *GetScene() const;
 
 private:
@@ -62,7 +59,6 @@ private:
     std::unique_ptr<ReferenceOverlay> m_ReferenceOverlay;
     std::unique_ptr<CoordinateResolver> m_CoordinateResolver;
     std::unique_ptr<CommandManager> m_CommandManager;
-    std::unique_ptr<PreviewManager> m_PreviewManager;
     std::unique_ptr<InteractionManager> m_InteractionManager;
     std::unique_ptr<CadController> m_CadController;
 

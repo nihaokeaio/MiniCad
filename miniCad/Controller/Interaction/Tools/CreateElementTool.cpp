@@ -9,17 +9,40 @@
 #include <gp_Vec.hxx>
 
 #include "../../../Data/Geometry/GeometryTypes.h"
+#include "Element/Element.h"
+#include "Element/ElementFactory.h"
 #include "../../CadController.h"
 #include "../../ElementCreateParams.h"
-#include "../../Preview/PreviewManager.h"
 #include "../InteractionManager.h"
 #include "Controller/Interaction/CoordinateResolver.h"
+#include "Presentation/ViewState/ViewStateAdaptor.h"
+
+namespace {
+    void BeginElementPreview(ViewStateAdaptor *viewStateAdaptor, ElementType elementType) {
+        if (viewStateAdaptor == nullptr) {
+            return;
+        }
+
+        const auto element = ElementFactory::Create(elementType);
+        if (!element) {
+            return;
+        }
+
+        viewStateAdaptor->ShowPreviewShape(element->BuildShape());
+    }
+
+    void UpdateElementPreview(ViewStateAdaptor *viewStateAdaptor, const GeometryTypes::RTransform &transform) {
+        if (viewStateAdaptor == nullptr) {
+            return;
+        }
+
+        viewStateAdaptor->UpdatePreviewTransform(transform);
+    }
+}
 
 CreateElementTool::CreateElementTool(InteractionContext *context, ElementType elementType, bool continuous)
     : InteractionHandler(context), m_ElementType(elementType), m_Continuous(continuous) {
-    if (m_Context->m_PreviewManager) {
-        m_Context->m_PreviewManager->BeginElementPreview(ElementCreateParams{m_ElementType, {}});
-    }
+    BeginElementPreview(m_Context->m_ViewStateAdaptor, m_ElementType);
 }
 
 bool CreateElementTool::MousePress(QMouseEvent *event) {
@@ -38,8 +61,8 @@ bool CreateElementTool::MousePress(QMouseEvent *event) {
         {{"LocalTransform", PropertyValue(transform)}}
     };
     m_Context->m_Controller->CreateElement(params);
-    if (m_Context->m_PreviewManager) {
-        m_Context->m_PreviewManager->ExitPreviewState();
+    if (m_Context->m_ViewStateAdaptor) {
+        m_Context->m_ViewStateAdaptor->ClearPreview();
     }
     return true;
 }
@@ -50,9 +73,7 @@ InteractionPostAction CreateElementTool::OnMousePressAfter(QMouseEvent *, bool h
     }
 
     if (m_Continuous) {
-        if (m_Context->m_PreviewManager) {
-            m_Context->m_PreviewManager->BeginElementPreview(ElementCreateParams{m_ElementType, {}});
-        }
+        BeginElementPreview(m_Context->m_ViewStateAdaptor, m_ElementType);
         return InteractionPostAction::None;
     }
 
@@ -60,18 +81,13 @@ InteractionPostAction CreateElementTool::OnMousePressAfter(QMouseEvent *, bool h
 }
 
 bool CreateElementTool::MouseMove(QMouseEvent *event) {
-    if (m_Context->m_PreviewManager) {
-        auto ints = m_Context->m_CoordinateResolver->ScreenToWorkPlane(event->x(), event->y());
-        if (!ints.has_value()) {
-            return false;
-        }
-        GeometryTypes::RTransform transform;
-        transform.SetTranslation(gp_Vec(ints.value()));
-        ElementCreateParams params{
-            m_ElementType,
-            {{"LocalTransform", PropertyValue(transform)}}
-        };
-        m_Context->m_PreviewManager->UpdateElementPreview(params);
+    auto ints = m_Context->m_CoordinateResolver->ScreenToWorkPlane(event->x(), event->y());
+    if (!ints.has_value()) {
+        return false;
     }
+
+    GeometryTypes::RTransform transform;
+    transform.SetTranslation(gp_Vec(ints.value()));
+    UpdateElementPreview(m_Context->m_ViewStateAdaptor, transform);
     return false;
 }

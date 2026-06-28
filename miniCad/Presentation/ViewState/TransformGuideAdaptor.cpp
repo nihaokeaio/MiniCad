@@ -20,6 +20,7 @@ using namespace TransformElementSpace;
 
 namespace {
     constexpr double GuideLength = 180.0;
+    constexpr double ConstraintLineLength = 5000.0;
     constexpr double ArrowLength = 24.0;
     constexpr double ArrowWidth = 10.0;
     constexpr double RotateRadius = 120.0;
@@ -144,6 +145,19 @@ namespace {
         AddAxisGuide(objects, state, TransformConstraint::ZAxis);
     }
 
+    void AddConstraintLine(std::vector<Handle(AIS_InteractiveObject)> &objects,
+                           const TransformGuideState &state) {
+        const gp_Dir direction = AxisDirection(state.constraint);
+        const gp_Vec axisVector(direction);
+        const Quantity_Color color = AxisColor(state.constraint, true);
+        AddLine(
+            objects,
+            state.pivot.Translated(axisVector * -ConstraintLineLength),
+            state.pivot.Translated(axisVector * ConstraintLineLength),
+            color,
+            HighlightWidth);
+    }
+
     void AddRotateGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
                         const TransformGuideState &state) {
         for (const auto axis: {TransformConstraint::XAxis, TransformConstraint::YAxis, TransformConstraint::ZAxis}) {
@@ -155,6 +169,38 @@ namespace {
                 AxisWidth(state, axis)));
         }
     }
+
+    void AddConstrainedRotateGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+                                   const TransformGuideState &state) {
+        AddConstraintLine(objects, state);
+        objects.push_back(MakeCircleObject(
+            state.pivot,
+            AxisDirection(state.constraint),
+            AxisColor(state.constraint, true),
+            HighlightWidth));
+    }
+
+    void AddTransformGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+                           const TransformGuideState &state) {
+        switch (state.mode) {
+            case TransformMode::Rotate:
+                if (state.constraint == TransformConstraint::Free) {
+                    AddRotateGuide(objects, state);
+                } else {
+                    AddConstrainedRotateGuide(objects, state);
+                }
+                break;
+            case TransformMode::Scale:
+            case TransformMode::Move:
+            default:
+                if (state.constraint == TransformConstraint::Free) {
+                    AddMoveScaleGuide(objects, state);
+                } else {
+                    AddConstraintLine(objects, state);
+                }
+                break;
+        }
+    }
 }
 
 TransformGuideAdaptor::TransformGuideAdaptor(const opencascade::handle<AIS_InteractiveContext> &context) : m_Context(
@@ -163,26 +209,14 @@ TransformGuideAdaptor::TransformGuideAdaptor(const opencascade::handle<AIS_Inter
 
 void TransformGuideAdaptor::ShowTransformGuide(const std::shared_ptr<TransformGuideState> &transformGuideState) {
     ClearObjects(false);
-    if (m_Context.IsNull() ||
-        transformGuideState == nullptr ||
-        !transformGuideState->visible ||
-        transformGuideState->constraint == TransformConstraint::Free) {
+    if (m_Context.IsNull() || transformGuideState == nullptr || !transformGuideState->visible) {
         if (!m_Context.IsNull()) {
             m_Context->UpdateCurrentViewer();
         }
         return;
     }
 
-    switch (transformGuideState->mode) {
-        case TransformMode::Rotate:
-            AddRotateGuide(m_GuideObjects, *transformGuideState);
-            break;
-        case TransformMode::Scale:
-        case TransformMode::Move:
-        default:
-            AddMoveScaleGuide(m_GuideObjects, *transformGuideState);
-            break;
-    }
+    AddTransformGuide(m_GuideObjects, *transformGuideState);
 
     for (const auto &object: m_GuideObjects) {
         if (!object.IsNull()) {

@@ -113,10 +113,12 @@ namespace {
 }
 
 TransformElementTool::TransformElementTool(InteractionContext *context) : InteractionHandler(context) {
+    RefreshGuideFromSelection();
 }
 
 TransformElementTool::~TransformElementTool() {
     CancelDragState();
+    HideTransformGuide();
 }
 
 bool TransformElementTool::MousePress(QMouseEvent *event) {
@@ -204,6 +206,7 @@ bool TransformElementTool::BeginDrag(QMouseEvent *event) {
     }
 
     m_Session.pivot = center.value();
+    m_Session.guideVisible = true;
     UpdateIntersectionPlane();
     const auto startPoint = m_Context->m_CoordinateResolver->ScreenToPlane(event->x(), event->y(), m_Session.dragPlane);
     if (!startPoint.has_value()) {
@@ -407,7 +410,9 @@ void TransformElementTool::ClearDragState() {
     m_Session.changes.clear();
     m_Session.state = TransformState::Idle;
     m_Session.constraint = TransformConstraint::Free;
-    UpdateTransformGuideState();
+    if (!RefreshGuideFromSelection()) {
+        HideTransformGuide();
+    }
 }
 
 void TransformElementTool::CancelDragState() {
@@ -419,9 +424,38 @@ void TransformElementTool::CancelDragState() {
     ClearDragState();
 }
 
+bool TransformElementTool::RefreshGuideFromSelection() {
+    if (m_Context == nullptr || m_Context->m_Document == nullptr || m_Context->m_Selection == nullptr) {
+        return false;
+    }
+
+    const auto center = SelectionCenter(m_Context->m_Document, m_Context->m_Selection->Selected());
+    if (!center.has_value()) {
+        return false;
+    }
+
+    m_Session.pivot = center.value();
+    m_Session.guideVisible = true;
+    UpdateIntersectionPlane();
+    return true;
+}
+
+void TransformElementTool::HideTransformGuide() {
+    m_Session.guideVisible = false;
+    if (m_Context == nullptr || m_Context->m_ViewStateAdaptor == nullptr) {
+        return;
+    }
+
+    m_Context->m_ViewStateAdaptor->ShowTransformGuide(std::make_shared<TransformGuideState>());
+}
+
 void TransformElementTool::UpdateTransformGuideState() const {
+    if (m_Context == nullptr || m_Context->m_ViewStateAdaptor == nullptr) {
+        return;
+    }
+
     const auto transGuideState = std::make_shared<TransformGuideState>();
-    transGuideState->visible = m_Session.state == TransformState::Dragging;
+    transGuideState->visible = m_Session.guideVisible;
     transGuideState->pivot = m_Session.pivot;
     transGuideState->constraint = m_Session.constraint;
     transGuideState->mode = m_Session.mode;

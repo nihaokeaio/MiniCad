@@ -47,6 +47,7 @@ public:
         gp_Pnt currentPoint;
 
         std::vector<ElementTransformChange> changes;
+        bool guideVisible{false};
     };
 
 
@@ -92,6 +93,10 @@ private:
     void ClearDragState();
 
     void CancelDragState();
+
+    bool RefreshGuideFromSelection();
+
+    void HideTransformGuide();
 
     void UpdateTransformGuideState() const;
 

@@ -23,6 +23,9 @@ public:
 
     std::optional<PickResult> Pick(const PickQuery &query);
 
+
+    std::optional<PickResult> PickWidget(const PickQuery &query) const;
+
 private:
     [[nodiscard]] static PickResult MakeObjectPick(ElementId elementId,
                                                    const PickQuery &query,

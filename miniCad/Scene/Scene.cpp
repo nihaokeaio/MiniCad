@@ -64,7 +64,7 @@ namespace {
 }
 
 void Scene::AddOrUpdate(const Element &element) {
-    auto object = std::make_unique<SceneObject>();
+    auto object = std::make_unique<SceneElement>();
     object->elementId = element.GetId();
     object->localTransform = element.GetLocalTransform();
     object->worldTransform = object->localTransform;
@@ -76,21 +76,44 @@ void Scene::AddOrUpdate(const Element &element) {
     ++m_Version;
 }
 
+void Scene::AddWidget(const ElementMesh &elementMesh, const GizmoHandleId &handle) {
+    auto widget = std::make_unique<SceneWidget>();
+    widget->handle = handle;
+    widget->localTransform = GeometryTypes::RTransform();
+    widget->worldTransform = widget->localTransform;
+    widget->pickGeometry = elementMesh;
+    widget->pickPrimitives = BuildPickPrimitives(widget->pickGeometry);
+    widget->primitiveBvh.Build(widget->pickPrimitives);
+    m_Widgets.emplace_back(std::move(widget));
+}
+
+void Scene::SetWidgetTransform(const GeometryTypes::RTransform &worldTransform) {
+    for (auto &widget: m_Widgets) {
+        if (widget != nullptr) {
+            widget->worldTransform = worldTransform;
+        }
+    }
+}
+
 void Scene::Remove(ElementId elementId) {
     if (m_Objects.erase(elementId) > 0) {
         ++m_Version;
     }
 }
 
-const SceneObject *Scene::FindObject(ElementId elementId) const {
+const SceneElement *Scene::FindObject(ElementId elementId) const {
     if (const auto iter = m_Objects.find(elementId); iter != m_Objects.end()) {
         return iter->second.get();
     }
     return nullptr;
 }
 
-const std::unordered_map<ElementId, std::unique_ptr<SceneObject>> &Scene::GetAllObjects() const {
+const std::unordered_map<ElementId, std::unique_ptr<SceneElement> > &Scene::GetAllObjects() const {
     return m_Objects;
+}
+
+const std::vector<std::unique_ptr<SceneWidget> > &Scene::GetAllWidgets() const {
+    return m_Widgets;
 }
 
 std::vector<ElementId> Scene::GetPickCandidates() const {
@@ -126,6 +149,15 @@ uint64_t Scene::GetVersion() const {
 }
 
 void Scene::Clear() {
+    ClearWidgets();
+    ClearObjects();
+}
+
+void Scene::ClearWidgets() {
+    m_Widgets.clear();
+}
+
+void Scene::ClearObjects() {
     if (!m_Objects.empty()) {
         m_Objects.clear();
         ++m_Version;

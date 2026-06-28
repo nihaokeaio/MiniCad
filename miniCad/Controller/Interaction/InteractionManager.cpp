@@ -6,6 +6,7 @@
 
 #include <QMouseEvent>
 
+#include "Gizmo/GizmoManager.h"
 #include "Tools/CreateElementTool.h"
 #include "NavigationHandler.h"
 #include "SelectionHandler.h"
@@ -34,10 +35,21 @@ InteractionContext::~InteractionContext() = default;
 
 InteractionManager::InteractionManager(std::unique_ptr<InteractionContext> context) {
     m_Context = std::move(context);
+    m_GizmoManager = std::make_unique<GizmoManager>(m_Context.get());
+    m_Context->m_GizmoManager = m_GizmoManager.get();
     Initiate();
 }
 
-InteractionManager::~InteractionManager() = default;
+InteractionManager::~InteractionManager() {
+    m_ActiveHandler.reset();
+    m_GlobalHandlers.clear();
+    m_ViewController.reset();
+
+    if (m_Context != nullptr) {
+        m_Context->m_GizmoManager = nullptr;
+    }
+    m_GizmoManager.reset();
+}
 
 void InteractionManager::Initiate() {
     m_GlobalHandlers.push_back(std::make_unique<NavigationHandler>(m_Context.get()));

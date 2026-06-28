@@ -5,19 +5,21 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <gp_Pnt.hxx>
 #include <vector>
 
-#include "Controller/Interaction/Tools/TransformElementTool.h"
+#include "Controller/Interaction/TransformTypes.h"
 
 
 struct TransformGuideState {
     bool visible = false;
     gp_Pnt pivot;
-    TransformElementSpace::TransformMode mode;
-    TransformElementSpace::TransformConstraint constraint;
+    std::optional<gp_Pnt> constraintPivot;
+    TransformElementSpace::TransformMode mode{TransformElementSpace::TransformMode::Move};
+    TransformElementSpace::TransformConstraint constraint{TransformElementSpace::TransformConstraint::Free};
 };
 
 
@@ -30,8 +32,22 @@ public:
     void ClearTransformGuide();
 
 private:
+    struct TopologyKey {
+        TransformElementSpace::TransformMode mode{TransformElementSpace::TransformMode::Move};
+        TransformElementSpace::TransformConstraint constraint{TransformElementSpace::TransformConstraint::Free};
+        bool valid{false};
+
+        bool Matches(const TransformGuideState &state) const;
+    };
+
+    void RebuildObjects(const TransformGuideState &state);
+
+    void UpdateObjectTransforms(const TransformGuideState &state) const;
+
     void ClearObjects(bool updateViewer);
 
     Handle(AIS_InteractiveContext) m_Context;
-    std::vector<Handle(AIS_InteractiveObject)> m_GuideObjects;
+    std::vector<Handle(AIS_InteractiveObject)> m_MainGuideObjects;
+    std::vector<Handle(AIS_InteractiveObject)> m_ConstraintGuideObjects;
+    TopologyKey m_Topology;
 };

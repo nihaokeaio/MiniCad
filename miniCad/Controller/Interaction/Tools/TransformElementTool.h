@@ -4,31 +4,12 @@
 
 #pragma once
 #include "Controller/Interaction/InteractionHandler.h"
+#include "Controller/Interaction/TransformTypes.h"
 #include "Controller/Command/TransformElementsCommand.h"
 #include "Utils/Types.h"
 
 #include <gp_Pln.hxx>
 #include <vector>
-
-namespace TransformElementSpace {
-    enum class TransformState {
-        Idle,
-        Dragging
-    };
-
-    enum class TransformMode {
-        Move,
-        Rotate,
-        Scale
-    };
-
-    enum class TransformConstraint {
-        XAxis,
-        YAxis,
-        ZAxis,
-        Free
-    };
-}
 
 class TransformElementTool : public InteractionHandler {
 public:
@@ -47,7 +28,6 @@ public:
         gp_Pnt currentPoint;
 
         std::vector<ElementTransformChange> changes;
-        bool guideVisible{false};
     };
 
 
@@ -72,6 +52,8 @@ private:
 
     void ApplyDelta(const gp_Vec &delta);
 
+    void UpdateDraggingGizmo(const GeometryTypes::RTransform &transform) const;
+
     [[nodiscard]] GeometryTypes::RTransform BuildTransform(const gp_Vec &delta) const;
 
     [[nodiscard]] GeometryTypes::RTransform BuildMoveTransform(const gp_Vec &delta) const;
@@ -94,11 +76,13 @@ private:
 
     void CancelDragState();
 
-    bool RefreshGuideFromSelection();
+    bool RefreshPivotFromSelection();
 
-    void HideTransformGuide();
+    bool ShowIdleGizmoFromSelection();
 
-    void UpdateTransformGuideState() const;
+    void HideGizmo();
+
+    void UpdateGizmoState() const;
 
     TransformSession m_Session;
 };

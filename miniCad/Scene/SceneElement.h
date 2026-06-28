@@ -13,11 +13,20 @@
 #include "Controller/Interaction/Picking/BVH/PrimitiveBvh.h"
 
 struct SceneObject {
-    ElementId elementId{ElementId::InvalidId};
+    virtual ~SceneObject() = default;
+
     GeometryTypes::RTransform localTransform;
     GeometryTypes::RTransform worldTransform;
-    Bnd_Box boundingBox;
     ElementMesh pickGeometry;
     std::vector<PickPrimitive> pickPrimitives;
     PrimitiveBvh primitiveBvh;
+};
+
+struct SceneElement : public SceneObject {
+    ElementId elementId{ElementId::InvalidId};
+    Bnd_Box boundingBox;
+};
+
+struct SceneWidget : public SceneObject {
+    GizmoHandleId handle;
 };

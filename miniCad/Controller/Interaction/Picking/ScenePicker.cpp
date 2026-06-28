@@ -6,7 +6,7 @@
 
 #include "GeomCalculator.h"
 #include "Scene/Scene.h"
-#include "Scene/SceneObject.h"
+#include "Scene/SceneElement.h"
 
 #include <gp_Trsf.hxx>
 
@@ -23,6 +23,10 @@ std::optional<PickResult> ScenePicker::Pick(const PickQuery &query) {
     std::optional<PickResult> best;
     if (m_Scene == nullptr) {
         return best;
+    }
+    //尝试先进行UI组件的求交
+    if (best = PickWidget(query); best.has_value()) {
+        return best.value();
     }
 
     if (m_ObjectBvhVersion != m_Scene->GetVersion()) {
@@ -108,9 +112,36 @@ std::optional<PickResult> ScenePicker::Pick(const PickQuery &query) {
     return best;
 }
 
+std::optional<PickResult> ScenePicker::PickWidget(const PickQuery &query) const {
+    std::optional<PickResult> best;
+    if (const auto &widgets = m_Scene->GetAllWidgets(); !widgets.empty()) {
+        for (const auto &w: widgets) {
+            if (w == nullptr) {
+                continue;
+            }
+
+            std::optional<PickResult> candidate;
+            const gp_Trsf worldToLocal = w->worldTransform.Inverted();
+            PickQuery localQuery{query.ray.Transformed(worldToLocal), query.settings};
+            if (const auto primitiveHit = m_PrimitivePicker.Pick(localQuery, *w)) {
+                candidate = *primitiveHit;
+            } else if (w->pickGeometry.triangles.empty()) {
+                continue;
+            }
+            if (candidate.has_value()) {
+                Picking::UpdateBestPick(best, *candidate);
+            }
+        }
+        if (best.has_value()) {
+            return best;
+        }
+    }
+    return best;
+}
+
 PickResult ScenePicker::MakeObjectPick(ElementId elementId, const PickQuery &query, double distance) {
     PickResult result;
-    result.pickTarget = PickTarget{elementId, MeshPrimitiveType::Object, InvalidPrimitiveIndex};
+    result.pickTarget = ElementPickTarget{elementId, MeshPrimitiveType::Object, InvalidPrimitiveIndex};
     result.distance = distance;
     result.hitPoint = query.ray.Location().Translated(query.ray.Direction().XYZ() * distance);
     return result;

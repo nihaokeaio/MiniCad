@@ -14,27 +14,27 @@ class SelectionManager {
 public:
     void SetSelected(ElementId id);
 
-    void SetSelected(const PickTarget &target);
+    void SetSelected(const ElementPickTarget &target);
 
     void Clear();
 
     bool IsSelected(ElementId id) const;
 
-    bool IsSelected(const PickTarget &target) const;
+    bool IsSelected(const ElementPickTarget &target) const;
 
     bool HasSelection() const;
 
     ElementId GetSingleSelected() const;
 
-    PickTarget GetSingleSelectedTarget() const;
+    ElementPickTarget GetSingleSelectedTarget() const;
 
     const std::unordered_set<ElementId> &Selected() const;
 
-    const std::unordered_set<PickTarget> &SelectedTargets() const;
+    const std::unordered_set<ElementPickTarget> &SelectedTargets() const;
 
 private:
     std::unordered_set<ElementId> m_Selected;
-    std::unordered_set<PickTarget> m_SelectedTargets;
+    std::unordered_set<ElementPickTarget> m_SelectedTargets;
 };
 
 

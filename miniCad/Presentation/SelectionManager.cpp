@@ -11,10 +11,10 @@ void SelectionManager::SetSelected(const ElementId id) {
     m_Selected.clear();
     m_Selected.insert(id);
     m_SelectedTargets.clear();
-    m_SelectedTargets.insert(PickTarget{id, MeshPrimitiveType::Object, InvalidPrimitiveIndex});
+    m_SelectedTargets.insert(ElementPickTarget{id, MeshPrimitiveType::Object, InvalidPrimitiveIndex});
 }
 
-void SelectionManager::SetSelected(const PickTarget &target) {
+void SelectionManager::SetSelected(const ElementPickTarget &target) {
     if (!target.elementId.IsValid()) {
         return;
     }
@@ -33,7 +33,7 @@ bool SelectionManager::IsSelected(const ElementId id) const {
     return m_Selected.contains(id);
 }
 
-bool SelectionManager::IsSelected(const PickTarget &target) const {
+bool SelectionManager::IsSelected(const ElementPickTarget &target) const {
     return m_SelectedTargets.contains(target);
 }
 
@@ -48,7 +48,7 @@ ElementId SelectionManager::GetSingleSelected() const {
     return *m_Selected.begin();
 }
 
-PickTarget SelectionManager::GetSingleSelectedTarget() const {
+ElementPickTarget SelectionManager::GetSingleSelectedTarget() const {
     if (m_SelectedTargets.empty()) {
         return {};
     }
@@ -59,6 +59,6 @@ const std::unordered_set<ElementId> &SelectionManager::Selected() const {
     return m_Selected;
 }
 
-const std::unordered_set<PickTarget> &SelectionManager::SelectedTargets() const {
+const std::unordered_set<ElementPickTarget> &SelectionManager::SelectedTargets() const {
     return m_SelectedTargets;
 }

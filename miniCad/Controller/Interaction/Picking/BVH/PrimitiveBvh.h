@@ -29,7 +29,6 @@ public:
 
     [[nodiscard]] bool Empty() const;
 
-    static double privitiveTime;
 
 private:
     class PImpl;

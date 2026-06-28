@@ -22,6 +22,7 @@ class ViewObjectRegistry;
 class SelectionManager;
 class CadController;
 class ViewStateAdaptor;
+class GizmoManager;
 
 class QMouseEvent;
 class QWheelEvent;
@@ -45,6 +46,7 @@ public:
     ViewStateAdaptor *m_ViewStateAdaptor = nullptr;
     CoordinateResolver *m_CoordinateResolver = nullptr;
     Scene *m_Scene = nullptr;
+    GizmoManager *m_GizmoManager = nullptr;
 };
 
 class InteractionManager {
@@ -88,6 +90,7 @@ private:
 
 private:
     std::unique_ptr<InteractionContext> m_Context;
+    std::unique_ptr<GizmoManager> m_GizmoManager;
     std::vector<std::unique_ptr<InteractionHandler> > m_GlobalHandlers;
     std::unique_ptr<InteractionHandler> m_ActiveHandler;
     std::unique_ptr<ViewController> m_ViewController;

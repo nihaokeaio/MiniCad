@@ -49,9 +49,7 @@ ObjectBvh::ObjectBvh(ObjectBvh &&) noexcept = default;
 ObjectBvh &ObjectBvh::operator=(ObjectBvh &&) noexcept = default;
 
 void ObjectBvh::Build(const std::vector<PickObject> &objects) const {
-    Timer timer;
     m_Impl->Build(objects);
-    qDebug() << "[PickBenchmark]" << "Build ObjectBvh :" << timer.ElapsedMicroseconds() << "us";
 }
 
 std::vector<ElementId> ObjectBvh::Query(const PickQuery &query) const {

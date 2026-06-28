@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "../Data/Element/ElementId.h"
-#include "SceneObject.h"
+#include "SceneElement.h"
 
 class Element;
 
@@ -17,10 +17,18 @@ class Scene {
 public:
     void AddOrUpdate(const Element &element);
 
+    void AddWidget(const ElementMesh &elementMesh, const GizmoHandleId &handle);
+
+    void SetWidgetTransform(const GeometryTypes::RTransform &worldTransform);
+
     void Remove(ElementId elementId);
 
-    [[nodiscard]] const SceneObject *FindObject(ElementId elementId) const;
-    const std::unordered_map<ElementId, std::unique_ptr<SceneObject>>& GetAllObjects() const;
+    [[nodiscard]] const SceneElement *FindObject(ElementId elementId) const;
+
+    const std::unordered_map<ElementId, std::unique_ptr<SceneElement> > &GetAllObjects() const;
+
+    const std::vector<std::unique_ptr<SceneWidget> > &GetAllWidgets() const;
+
     [[nodiscard]] std::vector<ElementId> GetPickCandidates() const;
 
     [[nodiscard]] bool Contains(ElementId elementId) const;
@@ -31,7 +39,12 @@ public:
 
     void Clear();
 
+    void ClearWidgets();
+
+    void ClearObjects();
+
 private:
-    std::unordered_map<ElementId, std::unique_ptr<SceneObject>> m_Objects;
+    std::unordered_map<ElementId, std::unique_ptr<SceneElement> > m_Objects;
+    std::vector<std::unique_ptr<SceneWidget> > m_Widgets;
     uint64_t m_Version{0};
 };

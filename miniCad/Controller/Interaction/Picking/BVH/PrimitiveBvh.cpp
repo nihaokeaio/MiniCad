@@ -39,8 +39,6 @@ private:
     Picking::BvhTree<PickPrimitive, uint32_t> m_Tree;
 };
 
-double PrimitiveBvh::privitiveTime = 0;
-
 PrimitiveBvh::PrimitiveBvh() : m_Impl(std::make_unique<PImpl>()) {
 }
 
@@ -51,13 +49,10 @@ PrimitiveBvh::PrimitiveBvh(PrimitiveBvh &&) noexcept = default;
 PrimitiveBvh &PrimitiveBvh::operator=(PrimitiveBvh &&) noexcept = default;
 
 void PrimitiveBvh::Build(const std::vector<PickPrimitive> &primitives) const {
-    Timer timer;
     m_Impl->Build(primitives);
-    privitiveTime += timer.ElapsedMicroseconds();
 }
 
 std::vector<uint32_t> PrimitiveBvh::Query(const PickQuery &query) const {
-    qDebug() << "[PickBenchmark]" << "Build PrimitiveBvh :" << privitiveTime << "us";
     return m_Impl->Query(query);
 }
 

@@ -12,7 +12,9 @@
 #include <functional>
 #include <limits>
 #include <optional>
+#include <variant>
 
+#include "Controller/Interaction/Gizmo/GizmoTypes.h"
 #include "Element/ElementId.h"
 #include "ElementMesh/ElementMesh.h"
 
@@ -56,20 +58,25 @@ struct PickObject {
     Bnd_Box bounds;
 };
 
-struct PickTarget {
+struct ElementPickTarget {
     ElementId elementId{ElementId::InvalidId};
     MeshPrimitiveType primitiveType{MeshPrimitiveType::None};
     uint32_t primitiveIndex{InvalidPrimitiveIndex};
 
-    bool operator==(const PickTarget &rhs) const {
+    bool operator==(const ElementPickTarget &rhs) const {
         return elementId == rhs.elementId &&
                primitiveType == rhs.primitiveType &&
                primitiveIndex == rhs.primitiveIndex;
     }
 };
 
+struct GizmoPickTarget {
+    GizmoHandleId handle;
+};
+
+
 struct PickResult {
-    PickTarget pickTarget;
+    std::variant<ElementPickTarget, GizmoPickTarget> pickTarget;
     double distance{std::numeric_limits<double>::max()};
     gp_Pnt hitPoint;
 };
@@ -89,8 +96,8 @@ namespace Picking {
 }
 
 template<>
-struct std::hash<PickTarget> {
-    size_t operator()(const PickTarget &target) const noexcept {
+struct std::hash<ElementPickTarget> {
+    size_t operator()(const ElementPickTarget &target) const noexcept {
         const auto elementHash = std::hash<ElementId>{}(target.elementId);
         const auto typeHash = std::hash<uint8_t>{}(static_cast<uint8_t>(target.primitiveType));
         const auto indexHash = std::hash<uint32_t>{}(target.primitiveIndex);

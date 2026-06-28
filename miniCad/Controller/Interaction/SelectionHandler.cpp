@@ -6,6 +6,7 @@
 
 #include <QDebug>
 #include <QMouseEvent>
+#include <variant>
 
 #include "GeomCalculator.h"
 #include "../../Data/Element/ElementId.h"
@@ -42,11 +43,16 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
     const auto linearPick = m_ScenePicker->Pick(PickQuery{ray, linearSettings});
     const auto linearUs = timer.StopMicroseconds();
 
+    const auto pickedElement = pick.has_value() ? std::get_if<ElementPickTarget>(&pick->pickTarget) : nullptr;
+    const auto linearPickedElement = linearPick.has_value()
+                                         ? std::get_if<ElementPickTarget>(&linearPick->pickTarget)
+                                         : nullptr;
+
     qDebug() << "[PickBenchmark]"
              << "BVH:" << bvhUs << "us"
              << "Linear:" << linearUs << "us"
-             << "BVH hit:" << (pick.has_value() ? pick->pickTarget.elementId.GetValue() : 0)
-             << "Linear hit:" << (linearPick.has_value() ? linearPick->pickTarget.elementId.GetValue() : 0);
+             << "BVH hit:" << (pickedElement != nullptr ? pickedElement->elementId.GetValue() : 0)
+             << "Linear hit:" << (linearPickedElement != nullptr ? linearPickedElement->elementId.GetValue() : 0);
 
     if (!pick.has_value()) {
         m_Context->m_Selection->Clear();
@@ -56,7 +62,12 @@ bool SelectionHandler::MouseRelease(QMouseEvent *event) {
         return true;
     }
 
-    m_Context->m_Selection->SetSelected(pick->pickTarget);
+    const auto elementTarget = std::get_if<ElementPickTarget>(&pick->pickTarget);
+    if (elementTarget == nullptr) {
+        return true;
+    }
+
+    m_Context->m_Selection->SetSelected(*elementTarget);
     if (m_Context->m_ViewStateAdaptor) {
         m_Context->m_ViewStateAdaptor->ApplySelection(*m_Context->m_Selection);
     }

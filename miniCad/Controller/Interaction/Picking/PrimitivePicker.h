@@ -10,6 +10,8 @@
 #include "PickTypes.h"
 
 struct SceneObject;
+struct SceneWidget;
+struct SceneElement;
 
 class PrimitivePicker {
 public:
@@ -29,4 +31,7 @@ private:
                                            const PickPrimitive &primitive) const;
 
     [[nodiscard]] static std::vector<uint32_t> LinearPrimitiveIndices(const SceneObject &object);
+
+    std::variant<ElementPickTarget, GizmoPickTarget> GetPickTarget(const SceneObject &object, MeshPrimitiveType type,
+                                                                   const PickPrimitive &primitive) const;
 };

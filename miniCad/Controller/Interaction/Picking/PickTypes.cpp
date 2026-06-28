@@ -5,6 +5,17 @@
 #include "PickTypes.h"
 
 #include <optional>
+#include <variant>
+
+namespace {
+    int TargetPriority(const std::variant<ElementPickTarget, GizmoPickTarget> &target) {
+        if (std::holds_alternative<GizmoPickTarget>(target)) {
+            return 4;
+        }
+
+        return Picking::PrimitivePriority(std::get<ElementPickTarget>(target).primitiveType);
+    }
+}
 
 PickMask Picking::MaskForPrimitiveType(MeshPrimitiveType type) {
     switch (type) {
@@ -49,8 +60,8 @@ int Picking::PrimitivePriority(MeshPrimitiveType type) {
 }
 
 bool Picking::IsBetterPick(const PickResult &candidate, const PickResult &current) {
-    const int candidatePriority = PrimitivePriority(candidate.pickTarget.primitiveType);
-    const int currentPriority = PrimitivePriority(current.pickTarget.primitiveType);
+    const int candidatePriority = TargetPriority(candidate.pickTarget);
+    const int currentPriority = TargetPriority(current.pickTarget);
     if (candidatePriority != currentPriority) {
         return candidatePriority > currentPriority;
     }

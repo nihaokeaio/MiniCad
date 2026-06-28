@@ -5,12 +5,10 @@
 #include "PrimitivePicker.h"
 
 #include "GeomCalculator.h"
-#include "Scene/SceneObject.h"
+#include "Scene/SceneElement.h"
 
-#include <algorithm>
 #include <numeric>
 
-#include <gp_Trsf.hxx>
 
 std::optional<PickResult> PrimitivePicker::Pick(const PickQuery &localQuery, const SceneObject &object) const {
     std::optional<PickResult> best;
@@ -79,7 +77,7 @@ std::optional<PickResult> PrimitivePicker::PickPoint(const PickQuery &localQuery
     const gp_Pnt worldRayPoint = hit->point.Transformed(object.worldTransform);
 
     PickResult result;
-    result.pickTarget = PickTarget{object.elementId, MeshPrimitiveType::Point, primitive.primitiveIndex};
+    result.pickTarget = GetPickTarget(object, MeshPrimitiveType::Point, primitive);
     result.hitPoint = gp_Pnt(mesh.vertices[vertexIndex].position).Transformed(object.worldTransform);
     result.distance = worldRayOrigin.Distance(worldRayPoint);
     return result;
@@ -111,7 +109,7 @@ std::optional<PickResult> PrimitivePicker::PickSegment(const PickQuery &localQue
     const gp_Pnt worldRayPoint = hit->point.Transformed(object.worldTransform);
 
     PickResult result;
-    result.pickTarget = PickTarget{object.elementId, MeshPrimitiveType::Segment, primitive.primitiveIndex};
+    result.pickTarget = GetPickTarget(object, MeshPrimitiveType::Segment, primitive);
     result.hitPoint = hit->segmentPoint.Transformed(object.worldTransform);
     result.distance = worldRayOrigin.Distance(worldRayPoint);
     return result;
@@ -144,7 +142,7 @@ std::optional<PickResult> PrimitivePicker::PickTriangle(const PickQuery &localQu
     const gp_Pnt worldRayOrigin = localQuery.ray.Location().Transformed(object.worldTransform);
 
     PickResult result;
-    result.pickTarget = PickTarget{object.elementId, MeshPrimitiveType::Triangle, primitive.primitiveIndex};
+    result.pickTarget = GetPickTarget(object, MeshPrimitiveType::Triangle, primitive);
     result.hitPoint = hit->point.Transformed(object.worldTransform);
     result.distance = worldRayOrigin.Distance(result.hitPoint);
     return result;
@@ -154,4 +152,17 @@ std::vector<uint32_t> PrimitivePicker::LinearPrimitiveIndices(const SceneObject 
     std::vector<uint32_t> indices(object.pickPrimitives.size());
     std::iota(indices.begin(), indices.end(), 0);
     return indices;
+}
+
+std::variant<ElementPickTarget, GizmoPickTarget> PrimitivePicker::GetPickTarget(const SceneObject &object,
+    MeshPrimitiveType type, const PickPrimitive &primitive) const {
+    if (const auto sceneElement = dynamic_cast<const SceneElement *>(&object)) {
+        return ElementPickTarget{sceneElement->elementId, type, primitive.primitiveIndex};
+    }
+
+    if (const auto sceneWidget = dynamic_cast<const SceneWidget *>(&object)) {
+        return GizmoPickTarget{sceneWidget->handle};
+    }
+
+    return ElementPickTarget{ElementId::InvalidId, type, primitive.primitiveIndex};
 }

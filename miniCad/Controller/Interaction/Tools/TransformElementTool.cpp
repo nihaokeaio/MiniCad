@@ -17,11 +17,11 @@
 #include <gp_Vec.hxx>
 
 #include "Controller/CadController.h"
+#include "Controller/Interaction/Gizmo/GizmoManager.h"
 #include "Controller/Interaction/CoordinateResolver.h"
 #include "Controller/Interaction/InteractionManager.h"
 #include "Element/Element.h"
 #include "GeomCalculator.h"
-#include "Presentation/ViewState/TransformGuideAdaptor.h"
 #include "Presentation/ViewState/ViewStateAdaptor.h"
 
 using namespace TransformElementSpace;
@@ -69,6 +69,36 @@ namespace {
         }
     }
 
+    bool IsAxisConstraint(TransformConstraint constraint) {
+        return constraint == TransformConstraint::XAxis ||
+               constraint == TransformConstraint::YAxis ||
+               constraint == TransformConstraint::ZAxis;
+    }
+
+    GizmoMode ToGizmoMode(TransformMode mode) {
+        switch (mode) {
+            case TransformMode::Rotate:
+                return GizmoMode::Rotate;
+            case TransformMode::Scale:
+                return GizmoMode::Scale;
+            case TransformMode::Move:
+            default:
+                return GizmoMode::Move;
+        }
+    }
+
+    TransformMode ToTransformMode(GizmoMode mode) {
+        switch (mode) {
+            case GizmoMode::Rotate:
+                return TransformMode::Rotate;
+            case GizmoMode::Scale:
+                return TransformMode::Scale;
+            case GizmoMode::Move:
+            default:
+                return TransformMode::Move;
+        }
+    }
+
     double AxisParameter(const gp_Pnt &point, const gp_Lin &axis) {
         return gp_Vec(axis.Location(), point).Dot(gp_Vec(axis.Direction()));
     }
@@ -113,12 +143,12 @@ namespace {
 }
 
 TransformElementTool::TransformElementTool(InteractionContext *context) : InteractionHandler(context) {
-    RefreshGuideFromSelection();
+    ShowIdleGizmoFromSelection();
 }
 
 TransformElementTool::~TransformElementTool() {
     CancelDragState();
-    HideTransformGuide();
+    HideGizmo();
 }
 
 bool TransformElementTool::MousePress(QMouseEvent *event) {
@@ -126,6 +156,31 @@ bool TransformElementTool::MousePress(QMouseEvent *event) {
         return false;
     }
 
+    if (m_Context == nullptr || m_Context->m_GizmoManager == nullptr) {
+        return false;
+    }
+
+    const auto target = m_Context->m_GizmoManager->Pick(event->x(), event->y());
+    if (!target.has_value()) {
+        return false;
+    }
+
+    const bool isConstrainedHandle =
+        (target->handle.type == GizmoHandleType::Axis ||
+         target->handle.type == GizmoHandleType::Ring ||
+         target->handle.type == GizmoHandleType::Plane) &&
+        target->handle.constraint != TransformConstraint::Free;
+    const bool isFreeMoveHandle =
+        target->handle.type == GizmoHandleType::Center &&
+        target->handle.mode == GizmoMode::Move &&
+        target->handle.constraint == TransformConstraint::Free;
+    if (!isConstrainedHandle && !isFreeMoveHandle) {
+        return false;
+    }
+
+    m_Session.mode = ToTransformMode(target->handle.mode);
+    m_Session.constraint = target->handle.constraint;
+    m_Context->m_GizmoManager->SetActive(target->handle);
     return BeginDrag(event);
 }
 
@@ -143,7 +198,9 @@ bool TransformElementTool::MouseRelease(QMouseEvent *event) {
 
 bool TransformElementTool::MouseMove(QMouseEvent *event) {
     if (m_Session.state != TransformState::Dragging) {
-        return false;
+        return m_Context != nullptr &&
+               m_Context->m_GizmoManager != nullptr &&
+               m_Context->m_GizmoManager->UpdateHover(event->x(), event->y());
     }
 
     return UpdateDrag(event);
@@ -180,6 +237,7 @@ bool TransformElementTool::KeyPress(const QKeyEvent *event) {
     }
 
     UpdateIntersectionPlane();
+    UpdateGizmoState();
     return true;
 }
 
@@ -206,7 +264,6 @@ bool TransformElementTool::BeginDrag(QMouseEvent *event) {
     }
 
     m_Session.pivot = center.value();
-    m_Session.guideVisible = true;
     UpdateIntersectionPlane();
     const auto startPoint = m_Context->m_CoordinateResolver->ScreenToPlane(event->x(), event->y(), m_Session.dragPlane);
     if (!startPoint.has_value()) {
@@ -233,7 +290,7 @@ bool TransformElementTool::BeginDrag(QMouseEvent *event) {
     }
 
     m_Session.state = TransformState::Dragging;
-    UpdateTransformGuideState();
+    UpdateGizmoState();
     return true;
 }
 
@@ -244,12 +301,13 @@ bool TransformElementTool::UpdateDrag(QMouseEvent *event) {
 }
 
 void TransformElementTool::ApplyDelta(const gp_Vec &delta) {
+    const auto transform = BuildTransform(delta);
     std::vector<ElementViewTransform> viewTransforms;
     viewTransforms.reserve(m_Session.changes.size());
 
     for (auto &change: m_Session.changes) {
         auto newTransform = change.oldTransform;
-        newTransform = BuildTransform(delta) * newTransform;
+        newTransform = transform * newTransform;
         change.newTransform = newTransform;
         viewTransforms.push_back(ElementViewTransform{change.elementId, newTransform});
     }
@@ -257,6 +315,20 @@ void TransformElementTool::ApplyDelta(const gp_Vec &delta) {
     if (m_Context->m_ViewStateAdaptor != nullptr) {
         m_Context->m_ViewStateAdaptor->ApplyElementTransforms(viewTransforms);
     }
+    UpdateDraggingGizmo(transform);
+}
+
+void TransformElementTool::UpdateDraggingGizmo(const GeometryTypes::RTransform &transform) const {
+    if (m_Context == nullptr || m_Context->m_GizmoManager == nullptr) {
+        return;
+    }
+
+    gp_Pnt displayPivot = m_Session.pivot;
+    if (m_Session.mode == TransformMode::Move) {
+        displayPivot.Transform(transform);
+    }
+
+    m_Context->m_GizmoManager->UpdatePose(displayPivot, m_Session.pivot);
 }
 
 GeometryTypes::RTransform TransformElementTool::BuildTransform(const gp_Vec &delta) const {
@@ -284,6 +356,18 @@ GeometryTypes::RTransform TransformElementTool::BuildMoveTransform(const gp_Vec 
         }
         case TransformConstraint::ZAxis: {
             transform.SetTranslation(gp_Vec(0.0, 0.0, delta.Z()));
+            return transform;
+        }
+        case TransformConstraint::XYPlane: {
+            transform.SetTranslation(gp_Vec(delta.X(), delta.Y(), 0.0));
+            return transform;
+        }
+        case TransformConstraint::YZPlane: {
+            transform.SetTranslation(gp_Vec(0.0, delta.Y(), delta.Z()));
+            return transform;
+        }
+        case TransformConstraint::ZXPlane: {
+            transform.SetTranslation(gp_Vec(delta.X(), 0.0, delta.Z()));
             return transform;
         }
         default:
@@ -327,7 +411,7 @@ GeometryTypes::RTransform TransformElementTool::BuildScaleTransform(const gp_Vec
 }
 
 gp_Vec TransformElementTool::ResolveConstrainedDelta(const QMouseEvent *event) const {
-    if (m_Session.constraint != TransformConstraint::Free &&
+    if (IsAxisConstraint(m_Session.constraint) &&
         (m_Session.mode == TransformMode::Move || m_Session.mode == TransformMode::Scale)) {
         return ResolveAxisDelta(event);
     }
@@ -386,11 +470,25 @@ void TransformElementTool::UpdateIntersectionPlane() {
             }
             break;
         }
+        case TransformConstraint::XYPlane: {
+            m_Session.constraintAxis = gp_Lin(m_Session.pivot, gp::DZ());
+            m_Session.dragPlane = gp_Pln(m_Session.pivot, gp::DZ());
+            break;
+        }
+        case TransformConstraint::YZPlane: {
+            m_Session.constraintAxis = gp_Lin(m_Session.pivot, gp::DX());
+            m_Session.dragPlane = gp_Pln(m_Session.pivot, gp::DX());
+            break;
+        }
+        case TransformConstraint::ZXPlane: {
+            m_Session.constraintAxis = gp_Lin(m_Session.pivot, gp::DY());
+            m_Session.dragPlane = gp_Pln(m_Session.pivot, gp::DY());
+            break;
+        }
         default:
             m_Session.constraintAxis = gp_Lin(m_Session.pivot, gp::DZ());
             m_Session.dragPlane = gp_Pln(m_Session.pivot, gp::DZ());
     }
-    UpdateTransformGuideState();
 }
 
 void TransformElementTool::RestoreOriginalTransforms() {
@@ -410,8 +508,11 @@ void TransformElementTool::ClearDragState() {
     m_Session.changes.clear();
     m_Session.state = TransformState::Idle;
     m_Session.constraint = TransformConstraint::Free;
-    if (!RefreshGuideFromSelection()) {
-        HideTransformGuide();
+    if (m_Context != nullptr && m_Context->m_GizmoManager != nullptr) {
+        m_Context->m_GizmoManager->SetActive(std::nullopt);
+    }
+    if (!ShowIdleGizmoFromSelection()) {
+        HideGizmo();
     }
 }
 
@@ -424,7 +525,7 @@ void TransformElementTool::CancelDragState() {
     ClearDragState();
 }
 
-bool TransformElementTool::RefreshGuideFromSelection() {
+bool TransformElementTool::RefreshPivotFromSelection() {
     if (m_Context == nullptr || m_Context->m_Document == nullptr || m_Context->m_Selection == nullptr) {
         return false;
     }
@@ -435,29 +536,29 @@ bool TransformElementTool::RefreshGuideFromSelection() {
     }
 
     m_Session.pivot = center.value();
-    m_Session.guideVisible = true;
-    UpdateIntersectionPlane();
     return true;
 }
 
-void TransformElementTool::HideTransformGuide() {
-    m_Session.guideVisible = false;
-    if (m_Context == nullptr || m_Context->m_ViewStateAdaptor == nullptr) {
-        return;
+bool TransformElementTool::ShowIdleGizmoFromSelection() {
+    if (!RefreshPivotFromSelection()) {
+        return false;
     }
 
-    m_Context->m_ViewStateAdaptor->ShowTransformGuide(std::make_shared<TransformGuideState>());
+    UpdateIntersectionPlane();
+    UpdateGizmoState();
+    return true;
 }
 
-void TransformElementTool::UpdateTransformGuideState() const {
-    if (m_Context == nullptr || m_Context->m_ViewStateAdaptor == nullptr) {
+void TransformElementTool::HideGizmo() {
+    if (m_Context != nullptr && m_Context->m_GizmoManager != nullptr) {
+        m_Context->m_GizmoManager->Hide();
+    }
+}
+
+void TransformElementTool::UpdateGizmoState() const {
+    if (m_Context == nullptr || m_Context->m_GizmoManager == nullptr) {
         return;
     }
 
-    const auto transGuideState = std::make_shared<TransformGuideState>();
-    transGuideState->visible = m_Session.guideVisible;
-    transGuideState->pivot = m_Session.pivot;
-    transGuideState->constraint = m_Session.constraint;
-    transGuideState->mode = m_Session.mode;
-    m_Context->m_ViewStateAdaptor->ShowTransformGuide(transGuideState);
+    m_Context->m_GizmoManager->Show(m_Session.pivot, ToGizmoMode(m_Session.mode), m_Session.constraint);
 }

@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Controller/Interaction/TransformTypes.h"
+#include "Geometry/GeometryTypes.h"
 
 
 struct TransformGuideState {
@@ -20,6 +21,7 @@ struct TransformGuideState {
     std::optional<gp_Pnt> constraintPivot;
     TransformElementSpace::TransformMode mode{TransformElementSpace::TransformMode::Move};
     TransformElementSpace::TransformConstraint constraint{TransformElementSpace::TransformConstraint::Free};
+    GeometryTypes::RTransform transform;
 };
 
 

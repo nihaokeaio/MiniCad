@@ -6,6 +6,7 @@
 
 #include "GizmoTypes.h"
 #include "Controller/Interaction/Picking/PickTypes.h"
+#include "Geometry/GeometryTypes.h"
 
 #include <optional>
 
@@ -29,6 +30,8 @@ public:
 
     void UpdatePose(const gp_Pnt &pivot, std::optional<gp_Pnt> constraintPivot = std::nullopt);
 
+    void RefreshViewState();
+
     [[nodiscard]] std::optional<GizmoPickTarget> Pick(int mouseX, int mouseY) const;
 
     bool UpdateHover(int mouseX, int mouseY);
@@ -45,6 +48,8 @@ private:
     void SyncSceneWidgets() const;
 
     void SyncSceneWidgetTransforms() const;
+
+    [[nodiscard]] GeometryTypes::RTransform BuildGizmoWorldTransform() const;
 
     void ClearSceneWidgets() const;
 

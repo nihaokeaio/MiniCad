@@ -60,13 +60,15 @@ void ViewController::SetPerspective() const {
 }
 
 void ViewController::SetAxoView() const {
-    SetOrthographic();
+    //SetOrthographic();
+    SetPerspective();
     m_InteractionContext->m_View->SetProj(V3d_TypeOfOrientation_Zup_AxoRight);
     m_InteractionContext->m_View->Redraw();
 }
 
 void ViewController::SetTopView() const {
-    SetOrthographic();
+    //SetOrthographic();
+    SetPerspective();
     m_InteractionContext->m_View->SetProj(V3d_TypeOfOrientation_Zup_Top);
     m_InteractionContext->m_View->Redraw();
 }

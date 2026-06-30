@@ -88,6 +88,8 @@ private:
 
     void ApplyPostAction(InteractionPostAction action);
 
+    void RefreshGizmoViewState() const;
+
 private:
     std::unique_ptr<InteractionContext> m_Context;
     std::unique_ptr<GizmoManager> m_GizmoManager;

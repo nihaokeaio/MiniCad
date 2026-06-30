@@ -431,12 +431,11 @@ void TransformGuideAdaptor::RebuildObjects(const TransformGuideState &state) {
 }
 
 void TransformGuideAdaptor::UpdateObjectTransforms(const TransformGuideState &state) const {
-    const gp_Trsf mainTransform = TranslationTransform(state.pivot);
     const gp_Trsf constraintTransform = TranslationTransform(state.constraintPivot.value_or(state.pivot));
 
     for (const auto &object: m_MainGuideObjects) {
         if (!object.IsNull()) {
-            object->SetLocalTransformation(mainTransform);
+            object->SetLocalTransformation(state.transform);
         }
     }
     for (const auto &object: m_ConstraintGuideObjects) {

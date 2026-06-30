@@ -58,6 +58,12 @@ namespace GeomCalculator {
                                                                      double tolerance);
 
     Standard_EXPORT gp_Ax1 GetMouseScreenRay(int x, int y, const Handle(V3d_View) &view);
-};
 
+    /// @param view 相机
+    /// @param targetScreenPixelSize 目标屏幕像素长度
+    /// @param pivot 目标在场景中的锚点
+    /// @return targetScreenPixelSize 在 pivot 深度处对应的世界空间长度
+    Standard_EXPORT double GetPersistenceScreenSize(const Handle(V3d_View) &view, int targetScreenPixelSize,
+                                                    const gp_XYZ &pivot);
+};
 

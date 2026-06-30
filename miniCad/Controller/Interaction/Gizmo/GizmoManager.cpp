@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <Precision.hxx>
 #include <QDebug>
 #include <gp.hxx>
 #include <gp_Ax1.hxx>
@@ -202,11 +203,7 @@ namespace {
         return mesh;
     }
 
-    GeometryTypes::RTransform PivotTransform(const gp_Pnt &pivot) {
-        GeometryTypes::RTransform transform;
-        transform.SetTranslation(gp_Vec(gp::Origin(), pivot));
-        return transform;
-    }
+    constexpr double GizmoTargetPixelLength = 100.0;
 }
 
 GizmoManager::GizmoManager(InteractionContext *context) : m_Context(context) {
@@ -262,6 +259,15 @@ void GizmoManager::UpdatePose(const gp_Pnt &pivot, std::optional<gp_Pnt> constra
 
     m_State.pivot = pivot;
     m_State.constraintPivot = std::move(constraintPivot);
+    SyncView();
+    SyncSceneWidgetTransforms();
+}
+
+void GizmoManager::RefreshViewState() {
+    if (!m_State.visible) {
+        return;
+    }
+
     SyncView();
     SyncSceneWidgetTransforms();
 }
@@ -331,6 +337,7 @@ void GizmoManager::SyncView() const {
     guideState->constraintPivot = m_State.constraintPivot;
     guideState->constraint = m_State.constraint;
     guideState->mode = ToTransformMode(m_State.mode);
+    guideState->transform = BuildGizmoWorldTransform();
     m_Context->m_ViewStateAdaptor->ShowTransformGuide(guideState);
 }
 
@@ -414,8 +421,26 @@ void GizmoManager::SyncSceneWidgets() const {
 
 void GizmoManager::SyncSceneWidgetTransforms() const {
     if (m_Context != nullptr && m_Context->m_Scene != nullptr) {
-        m_Context->m_Scene->SetWidgetTransform(PivotTransform(m_State.pivot));
+        m_Context->m_Scene->SetWidgetTransform(BuildGizmoWorldTransform());
     }
+}
+
+GeometryTypes::RTransform GizmoManager::BuildGizmoWorldTransform() const {
+    Handle(V3d_View) view;
+    if (m_Context != nullptr) {
+        view = m_Context->m_View;
+    }
+
+    const double targetLength = GeomCalculator::GetPersistenceScreenSize(
+        view,
+        static_cast<int>(GizmoTargetPixelLength),
+        m_State.pivot.XYZ());
+    const double scale = std::max(targetLength / GizmoAxisLength, Precision::Confusion());
+
+    GeometryTypes::RTransform transform;
+    transform.SetScale(gp::Origin(), scale);
+    transform.SetTranslationPart(gp_Vec(gp::Origin(), m_State.pivot));
+    return transform;
 }
 
 void GizmoManager::ClearSceneWidgets() const {

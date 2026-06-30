@@ -94,6 +94,7 @@ void InteractionManager::MouseRelease(QMouseEvent *event) {
 
 void InteractionManager::MouseMove(QMouseEvent *event) {
     if (DispatchGlobalMouseMove(event)) {
+        RefreshGizmoViewState();
         return;
     }
     if (m_ActiveHandler) {
@@ -103,10 +104,12 @@ void InteractionManager::MouseMove(QMouseEvent *event) {
 
 void InteractionManager::Wheel(QWheelEvent *event) {
     if (DispatchGlobalWheel(event)) {
+        RefreshGizmoViewState();
         return;
     }
     if (m_ActiveHandler) {
         m_ActiveHandler->Wheel(event);
+        RefreshGizmoViewState();
     }
 }
 
@@ -121,12 +124,15 @@ void InteractionManager::KeyPress(const QKeyEvent *event) {
             } else {
                 m_ViewController->FitAll();
             }
+            RefreshGizmoViewState();
             break;
         case Qt::Key_1:
             m_ViewController->SetAxoView();
+            RefreshGizmoViewState();
             break;
         case Qt::Key_2:
             m_ViewController->SetTopView();
+            RefreshGizmoViewState();
             break;
         default:
             break;
@@ -179,5 +185,11 @@ void InteractionManager::ApplyPostAction(InteractionPostAction action) {
         case InteractionPostAction::None:
         default:
             break;
+    }
+}
+
+void InteractionManager::RefreshGizmoViewState() const {
+    if (m_GizmoManager != nullptr) {
+        m_GizmoManager->RefreshViewState();
     }
 }

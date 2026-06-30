@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <Aspect_Window.hxx>
+#include <Graphic3d_Camera.hxx>
 #include <V3d_View.hxx>
 
 std::optional<gp_Pnt> GeomCalculator::CalculatorRayIntsPlane(const gp_Ax1 &ray, const gp_Pln &plane) {
@@ -246,4 +248,32 @@ gp_Ax1 GeomCalculator::GetMouseScreenRay(int x, int y, const opencascade::handle
     Standard_Real dirX, dirY, dirZ;
     view->ConvertWithProj(x, y, worldX, worldY, worldZ, dirX, dirY, dirZ);
     return {gp_Pnt(worldX, worldY, worldZ), gp_Dir(dirX, dirY, dirZ)};
+}
+
+double GeomCalculator::GetPersistenceScreenSize(const opencascade::handle<V3d_View> &view,
+                                                const int targetScreenPixelSize, const gp_XYZ &pivot) {
+    if (view.IsNull() || view->Camera().IsNull() || view->Window().IsNull()) {
+        return static_cast<double>(targetScreenPixelSize);
+    }
+
+    Standard_Integer screenWidth, screenHeight;
+    view->Window()->Size(screenWidth, screenHeight);
+    if (screenHeight <= 0) {
+        return static_cast<double>(targetScreenPixelSize);
+    }
+
+    const auto camera = view->Camera();
+    double depth = camera->Distance();
+    if (!camera->IsOrthographic()) {
+        const gp_Vec eyeToPivot(camera->Eye(), gp_Pnt(pivot));
+        depth = eyeToPivot.Dot(gp_Vec(camera->Direction()));
+        if (depth <= Precision::Confusion()) {
+            depth = camera->Distance();
+        }
+    }
+
+    const double viewHeightAtDepth = camera->ViewDimensions(depth).Y();
+    const double worldPerPixel = viewHeightAtDepth / static_cast<double>(screenHeight);
+    const double desiredWorldLength = static_cast<double>(targetScreenPixelSize) * worldPerPixel;
+    return desiredWorldLength;
 }

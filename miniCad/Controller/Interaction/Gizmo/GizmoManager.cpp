@@ -220,7 +220,7 @@ void GizmoManager::Show(const gp_Pnt &pivot,
 
     m_State.visible = true;
     m_State.pivot = pivot;
-    m_State.constraintPivot = std::move(constraintPivot);
+    m_State.constraintPivot = constraintPivot;
     m_State.mode = mode;
     m_State.constraint = constraint;
     SyncView();
@@ -311,15 +311,16 @@ bool GizmoManager::UpdateHover(int mouseX, int mouseY) {
     if (handle.has_value()) {
         qDebug() << "[GizmoPick] hover" << HandleTypeName(handle->type) << ConstraintName(handle->constraint);
     }
+    SyncView();
     return handle.has_value();
 }
 
 void GizmoManager::SetHovered(std::optional<GizmoHandleId> handle) {
-    m_State.hovered = std::move(handle);
+    m_State.hovered = handle;
 }
 
 void GizmoManager::SetActive(std::optional<GizmoHandleId> handle) {
-    m_State.active = std::move(handle);
+    m_State.active = handle;
 }
 
 const GizmoState &GizmoManager::State() const {
@@ -338,6 +339,8 @@ void GizmoManager::SyncView() const {
     guideState->constraint = m_State.constraint;
     guideState->mode = ToTransformMode(m_State.mode);
     guideState->transform = BuildGizmoWorldTransform();
+    guideState->hoveredGizmoHandleId = m_State.hovered;
+    guideState->activeGizmoHandleId = m_State.active;
     m_Context->m_ViewStateAdaptor->ShowTransformGuide(guideState);
 }
 

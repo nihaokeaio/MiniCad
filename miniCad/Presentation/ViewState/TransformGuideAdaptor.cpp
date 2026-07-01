@@ -4,18 +4,13 @@
 
 #include "TransformGuideAdaptor.h"
 
-#include <AIS_Shape.hxx>
-#include <BRepBuilderAPI_MakeEdge.hxx>
-#include <Prs3d_Drawer.hxx>
-#include <Prs3d_LineAspect.hxx>
 #include <Quantity_Color.hxx>
-#include <TopoDS_Edge.hxx>
 #include <gp.hxx>
-#include <gp_Ax2.hxx>
-#include <gp_Circ.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
+
+#include "Primitive/PresentationPrimitiveBuilder.h"
 
 using namespace TransformElementSpace;
 
@@ -29,7 +24,26 @@ namespace {
     constexpr double NormalWidth = 2.0;
     constexpr double HighlightWidth = 4.0;
 
-    Quantity_Color AxisColor(TransformConstraint constraint, bool highlight) {
+    enum class GuideVisualState {
+        Normal,
+        Hovered,
+        Active
+    };
+
+    GizmoMode ToGizmoMode(TransformMode mode) {
+        switch (mode) {
+            case TransformMode::Rotate:
+                return GizmoMode::Rotate;
+            case TransformMode::Scale:
+                return GizmoMode::Scale;
+            case TransformMode::Move:
+            default:
+                return GizmoMode::Move;
+        }
+    }
+
+    Quantity_Color AxisColor(TransformConstraint constraint, GuideVisualState visualState) {
+        const bool highlight = visualState != GuideVisualState::Normal;
         if (!highlight) {
             switch (constraint) {
                 case TransformConstraint::XAxis:
@@ -67,6 +81,13 @@ namespace {
             default:
                 return {0.9, 0.9, 0.9, Quantity_TOC_RGB};
         }
+    }
+
+    PresentationPrimitive::LineStyle GuideStyle(TransformConstraint constraint, GuideVisualState visualState) {
+        return {
+            AxisColor(constraint, visualState),
+            visualState == GuideVisualState::Normal ? NormalWidth : HighlightWidth
+        };
     }
 
     gp_Dir AxisDirection(TransformConstraint constraint) {
@@ -137,78 +158,93 @@ namespace {
         }
     }
 
-    double AxisWidth(const TransformGuideState &state, TransformConstraint axis) {
-        return state.constraint == TransformConstraint::Free || state.constraint == axis
-                   ? HighlightWidth
-                   : NormalWidth;
+    TransformConstraint PlaneFirstAxis(TransformConstraint plane) {
+        switch (plane) {
+            case TransformConstraint::XYPlane:
+                return TransformConstraint::XAxis;
+            case TransformConstraint::YZPlane:
+                return TransformConstraint::YAxis;
+            case TransformConstraint::ZXPlane:
+                return TransformConstraint::ZAxis;
+            default:
+                return TransformConstraint::XAxis;
+        }
     }
 
-    Handle(AIS_Shape) MakeLineObject(const gp_Pnt &from,
-                                     const gp_Pnt &to,
-                                     const Quantity_Color &color,
-                                     double width) {
-        const TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(from, to);
-        Handle(AIS_Shape) ais = new AIS_Shape(edge);
-        ais->SetColor(color);
-        ais->Attributes()->SetLineAspect(new Prs3d_LineAspect(color, Aspect_TOL_SOLID, width));
-        ais->Attributes()->SetWireAspect(new Prs3d_LineAspect(color, Aspect_TOL_SOLID, width));
-        return ais;
+    TransformConstraint PlaneSecondAxis(TransformConstraint plane) {
+        switch (plane) {
+            case TransformConstraint::XYPlane:
+                return TransformConstraint::YAxis;
+            case TransformConstraint::YZPlane:
+                return TransformConstraint::ZAxis;
+            case TransformConstraint::ZXPlane:
+                return TransformConstraint::XAxis;
+            default:
+                return TransformConstraint::YAxis;
+        }
     }
 
-    Handle(AIS_Shape) MakeCircleObject(const gp_Pnt &center,
-                                       const gp_Dir &normal,
-                                       const Quantity_Color &color,
-                                       double width) {
-        const gp_Circ circle(gp_Ax2(center, normal), RotateRadius);
-        const TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle);
-        Handle(AIS_Shape) ais = new AIS_Shape(edge);
-        ais->SetColor(color);
-        ais->Attributes()->SetLineAspect(new Prs3d_LineAspect(color, Aspect_TOL_SOLID, width));
-        ais->Attributes()->SetWireAspect(new Prs3d_LineAspect(color, Aspect_TOL_SOLID, width));
-        return ais;
+    GuideVisualState VisualStateForHandle(const TransformGuideState &state, const GizmoHandleId &handleId) {
+        if (state.activeGizmoHandleId.has_value() && state.activeGizmoHandleId.value() == handleId) {
+            return GuideVisualState::Active;
+        }
+
+        if (state.constraint != TransformConstraint::Free &&
+            state.constraint == handleId.constraint &&
+            ToGizmoMode(state.mode) == handleId.mode) {
+            return GuideVisualState::Active;
+        }
+
+        if (state.hoveredGizmoHandleId.has_value() && state.hoveredGizmoHandleId.value() == handleId) {
+            return GuideVisualState::Hovered;
+        }
+
+        return GuideVisualState::Normal;
     }
 
-    Handle(AIS_Shape) MakeCircleObject(const gp_Pnt &center,
-                                       const gp_Dir &normal,
-                                       double radius,
-                                       const Quantity_Color &color,
-                                       double width) {
-        const gp_Circ circle(gp_Ax2(center, normal), radius);
-        const TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle);
-        Handle(AIS_Shape) ais = new AIS_Shape(edge);
-        ais->SetColor(color);
-        ais->Attributes()->SetLineAspect(new Prs3d_LineAspect(color, Aspect_TOL_SOLID, width));
-        ais->Attributes()->SetWireAspect(new Prs3d_LineAspect(color, Aspect_TOL_SOLID, width));
-        return ais;
+    PresentationPrimitive::LineStyle StyleForHandle(const TransformGuideState &state, const GizmoHandleId &handleId) {
+        return GuideStyle(handleId.constraint, VisualStateForHandle(state, handleId));
     }
 
-    void AddLine(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    GizmoHandleId MakeHandle(TransformMode mode, TransformConstraint constraint, GizmoHandleType type) {
+        return {ToGizmoMode(mode), constraint, type};
+    }
+
+    void AddLine(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                  const gp_Pnt &from,
                  const gp_Pnt &to,
-                 const Quantity_Color &color,
-                 double width) {
-        objects.push_back(MakeLineObject(from, to, color, width));
+                 const PresentationPrimitive::LineStyle &style,
+                 std::optional<GizmoHandleId> handleId = std::nullopt) {
+        objects.push_back({PresentationPrimitive::MakeLine(from, to, style), handleId});
     }
 
-    void AddAxisGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddCircle(std::vector<TransformGuideAdaptor::GuideObject> &objects,
+                   const gp_Pnt &center,
+                   const gp_Dir &normal,
+                   double radius,
+                   const PresentationPrimitive::LineStyle &style,
+                   std::optional<GizmoHandleId> handleId = std::nullopt) {
+        objects.push_back({PresentationPrimitive::MakeCircle(center, normal, radius, style), handleId});
+    }
+
+    void AddAxisGuide(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                       const TransformGuideState &state,
                       TransformConstraint axis) {
-        const bool highlight = state.constraint == TransformConstraint::Free || state.constraint == axis;
-        const Quantity_Color color = AxisColor(axis, highlight);
-        const double width = AxisWidth(state, axis);
+        const GizmoHandleId handleId = MakeHandle(state.mode, axis, GizmoHandleType::Axis);
+        const auto style = StyleForHandle(state, handleId);
         const gp_Dir direction = AxisDirection(axis);
         const gp_Dir perpendicular = ArrowPerpendicular(axis);
         const gp_Pnt from = state.pivot;
         const gp_Pnt to = state.pivot.Translated(gp_Vec(direction) * GuideLength);
 
-        AddLine(objects, from, to, color, width);
+        AddLine(objects, from, to, style, handleId);
 
         const gp_Pnt wingBase = to.Translated(gp_Vec(direction) * -ArrowLength);
-        AddLine(objects, to, wingBase.Translated(gp_Vec(perpendicular) * ArrowWidth), color, width);
-        AddLine(objects, to, wingBase.Translated(gp_Vec(perpendicular) * -ArrowWidth), color, width);
+        AddLine(objects, to, wingBase.Translated(gp_Vec(perpendicular) * ArrowWidth), style, handleId);
+        AddLine(objects, to, wingBase.Translated(gp_Vec(perpendicular) * -ArrowWidth), style, handleId);
     }
 
-    void AddPlaneGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddPlaneGuide(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                        const TransformGuideState &state,
                        TransformConstraint plane) {
         constexpr double PlaneOffset = 52.0;
@@ -227,110 +263,99 @@ namespace {
         const gp_Pnt p1 = p0.Translated(uSize);
         const gp_Pnt p2 = p0.Translated(uSize + vSize);
         const gp_Pnt p3 = p0.Translated(vSize);
-        const Quantity_Color color = AxisColor(plane, true);
+        const GizmoHandleId handleId = MakeHandle(state.mode, plane, GizmoHandleType::Plane);
+        const auto style = StyleForHandle(state, handleId);
 
-        AddLine(objects, p0, p1, color, HighlightWidth);
-        AddLine(objects, p1, p2, color, HighlightWidth);
-        AddLine(objects, p2, p3, color, HighlightWidth);
-        AddLine(objects, p3, p0, color, HighlightWidth);
+        AddLine(objects, p0, p1, style, handleId);
+        AddLine(objects, p1, p2, style, handleId);
+        AddLine(objects, p2, p3, style, handleId);
+        AddLine(objects, p3, p0, style, handleId);
     }
 
-    void AddPlaneConstraintLines(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddPlaneConstraintLines(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                                  const gp_Pnt &pivot,
                                  TransformConstraint plane) {
         gp_Dir u;
         gp_Dir v;
         PlaneBasis(plane, u, v);
 
-        TransformConstraint uAxis = TransformConstraint::XAxis;
-        TransformConstraint vAxis = TransformConstraint::YAxis;
-        switch (plane) {
-            case TransformConstraint::XYPlane:
-                uAxis = TransformConstraint::XAxis;
-                vAxis = TransformConstraint::YAxis;
-                break;
-            case TransformConstraint::YZPlane:
-                uAxis = TransformConstraint::YAxis;
-                vAxis = TransformConstraint::ZAxis;
-                break;
-            case TransformConstraint::ZXPlane:
-                uAxis = TransformConstraint::ZAxis;
-                vAxis = TransformConstraint::XAxis;
-                break;
-            default:
-                break;
-        }
-
         AddLine(
             objects,
             pivot.Translated(gp_Vec(u) * -ConstraintLineLength),
             pivot.Translated(gp_Vec(u) * ConstraintLineLength),
-            AxisColor(uAxis, true),
-            HighlightWidth);
+            GuideStyle(PlaneFirstAxis(plane), GuideVisualState::Active));
         AddLine(
             objects,
             pivot.Translated(gp_Vec(v) * -ConstraintLineLength),
             pivot.Translated(gp_Vec(v) * ConstraintLineLength),
-            AxisColor(vAxis, true),
-            HighlightWidth);
+            GuideStyle(PlaneSecondAxis(plane), GuideVisualState::Active));
     }
 
-    void AddMoveScaleGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddMoveScaleGuide(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                            const TransformGuideState &state) {
-        if (state.mode == TransformMode::Move && state.constraint == TransformConstraint::Free) {
-            objects.push_back(MakeCircleObject(
+        if (state.mode == TransformMode::Move) {
+            const GizmoHandleId centerHandleId = MakeHandle(
+                state.mode,
+                TransformConstraint::Free,
+                GizmoHandleType::Center);
+            AddCircle(
+                objects,
                 state.pivot,
                 gp::DZ(),
                 CenterRadius,
-                AxisColor(TransformConstraint::Free, true),
-                HighlightWidth));
+                StyleForHandle(state, centerHandleId),
+                centerHandleId);
             AddPlaneGuide(objects, state, TransformConstraint::XYPlane);
             AddPlaneGuide(objects, state, TransformConstraint::YZPlane);
             AddPlaneGuide(objects, state, TransformConstraint::ZXPlane);
         }
+
         AddAxisGuide(objects, state, TransformConstraint::XAxis);
         AddAxisGuide(objects, state, TransformConstraint::YAxis);
         AddAxisGuide(objects, state, TransformConstraint::ZAxis);
     }
 
-    void AddConstraintLine(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddConstraintLine(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                            const gp_Pnt &pivot,
                            TransformConstraint constraint) {
         const gp_Dir direction = AxisDirection(constraint);
         const gp_Vec axisVector(direction);
-        const Quantity_Color color = AxisColor(constraint, true);
         AddLine(
             objects,
             pivot.Translated(axisVector * -ConstraintLineLength),
             pivot.Translated(axisVector * ConstraintLineLength),
-            color,
-            HighlightWidth);
+            GuideStyle(constraint, GuideVisualState::Active));
     }
 
-    void AddRotateGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddRotateGuide(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                         const TransformGuideState &state) {
         for (const auto axis: {TransformConstraint::XAxis, TransformConstraint::YAxis, TransformConstraint::ZAxis}) {
-            const bool highlight = state.constraint == TransformConstraint::Free || state.constraint == axis;
-            objects.push_back(MakeCircleObject(
+            const GizmoHandleId handleId = MakeHandle(state.mode, axis, GizmoHandleType::Ring);
+            AddCircle(
+                objects,
                 state.pivot,
                 AxisDirection(axis),
-                AxisColor(axis, highlight),
-                AxisWidth(state, axis)));
+                RotateRadius,
+                StyleForHandle(state, handleId),
+                handleId);
         }
     }
 
-    void AddMainTransformGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddMainTransformGuide(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                                const TransformGuideState &state) {
         switch (state.mode) {
             case TransformMode::Rotate:
                 if (state.constraint == TransformConstraint::Free) {
                     AddRotateGuide(objects, state);
                 } else {
-                    objects.push_back(MakeCircleObject(
+                    const GizmoHandleId handleId = MakeHandle(state.mode, state.constraint, GizmoHandleType::Ring);
+                    AddCircle(
+                        objects,
                         state.pivot,
                         AxisDirection(state.constraint),
-                        AxisColor(state.constraint, true),
-                        HighlightWidth));
+                        RotateRadius,
+                        StyleForHandle(state, handleId),
+                        handleId);
                 }
                 break;
             case TransformMode::Scale:
@@ -339,14 +364,10 @@ namespace {
                 if (state.constraint == TransformConstraint::Free) {
                     AddMoveScaleGuide(objects, state);
                 } else if (state.mode == TransformMode::Move && IsPlaneConstraint(state.constraint)) {
-                    TransformGuideState freeState = state;
-                    freeState.constraint = TransformConstraint::Free;
-                    AddMoveScaleGuide(objects, freeState);
+                    AddMoveScaleGuide(objects, state);
                     AddPlaneGuide(objects, state, state.constraint);
                 } else if (state.mode == TransformMode::Move && IsAxisConstraint(state.constraint)) {
-                    TransformGuideState freeState = state;
-                    freeState.constraint = TransformConstraint::Free;
-                    AddMoveScaleGuide(objects, freeState);
+                    AddMoveScaleGuide(objects, state);
                 } else {
                     AddAxisGuide(objects, state, state.constraint);
                 }
@@ -354,7 +375,7 @@ namespace {
         }
     }
 
-    void AddConstraintTransformGuide(std::vector<Handle(AIS_InteractiveObject)> &objects,
+    void AddConstraintTransformGuide(std::vector<TransformGuideAdaptor::GuideObject> &objects,
                                      const TransformGuideState &state) {
         if (state.constraint == TransformConstraint::Free) {
             return;
@@ -392,6 +413,7 @@ void TransformGuideAdaptor::ShowTransformGuide(const std::shared_ptr<TransformGu
         RebuildObjects(*transformGuideState);
     }
 
+    UpdateObjectStyles(*transformGuideState);
     UpdateObjectTransforms(*transformGuideState);
     m_Context->UpdateCurrentViewer();
 }
@@ -414,14 +436,14 @@ void TransformGuideAdaptor::RebuildObjects(const TransformGuideState &state) {
     AddMainTransformGuide(m_MainGuideObjects, localState);
     AddConstraintTransformGuide(m_ConstraintGuideObjects, localState);
 
-    for (const auto &object: m_MainGuideObjects) {
-        if (!object.IsNull()) {
-            m_Context->Display(object, 0, -1, Standard_False);
+    for (const auto &guideObject: m_MainGuideObjects) {
+        if (!guideObject.object.IsNull()) {
+            m_Context->Display(guideObject.object, 0, -1, Standard_False);
         }
     }
-    for (const auto &object: m_ConstraintGuideObjects) {
-        if (!object.IsNull()) {
-            m_Context->Display(object, 0, -1, Standard_False);
+    for (const auto &guideObject: m_ConstraintGuideObjects) {
+        if (!guideObject.object.IsNull()) {
+            m_Context->Display(guideObject.object, 0, -1, Standard_False);
         }
     }
 
@@ -433,15 +455,26 @@ void TransformGuideAdaptor::RebuildObjects(const TransformGuideState &state) {
 void TransformGuideAdaptor::UpdateObjectTransforms(const TransformGuideState &state) const {
     const gp_Trsf constraintTransform = TranslationTransform(state.constraintPivot.value_or(state.pivot));
 
-    for (const auto &object: m_MainGuideObjects) {
-        if (!object.IsNull()) {
-            object->SetLocalTransformation(state.transform);
+    for (const auto &guideObject: m_MainGuideObjects) {
+        if (!guideObject.object.IsNull()) {
+            guideObject.object->SetLocalTransformation(state.transform);
         }
     }
-    for (const auto &object: m_ConstraintGuideObjects) {
-        if (!object.IsNull()) {
-            object->SetLocalTransformation(constraintTransform);
+    for (const auto &guideObject: m_ConstraintGuideObjects) {
+        if (!guideObject.object.IsNull()) {
+            guideObject.object->SetLocalTransformation(constraintTransform);
         }
+    }
+}
+
+void TransformGuideAdaptor::UpdateObjectStyles(const TransformGuideState &state) const {
+    for (const auto &guideObject: m_MainGuideObjects) {
+        if (guideObject.object.IsNull() || !guideObject.handleId.has_value()) {
+            continue;
+        }
+
+        PresentationPrimitive::ApplyLineStyle(guideObject.object, StyleForHandle(state, guideObject.handleId.value()));
+        m_Context->Redisplay(guideObject.object, Standard_False);
     }
 }
 
@@ -453,14 +486,14 @@ void TransformGuideAdaptor::ClearObjects(bool updateViewer) {
         return;
     }
 
-    for (const auto &object: m_MainGuideObjects) {
-        if (!object.IsNull()) {
-            m_Context->Remove(object, Standard_False);
+    for (const auto &guideObject: m_MainGuideObjects) {
+        if (!guideObject.object.IsNull()) {
+            m_Context->Remove(guideObject.object, Standard_False);
         }
     }
-    for (const auto &object: m_ConstraintGuideObjects) {
-        if (!object.IsNull()) {
-            m_Context->Remove(object, Standard_False);
+    for (const auto &guideObject: m_ConstraintGuideObjects) {
+        if (!guideObject.object.IsNull()) {
+            m_Context->Remove(guideObject.object, Standard_False);
         }
     }
     m_MainGuideObjects.clear();

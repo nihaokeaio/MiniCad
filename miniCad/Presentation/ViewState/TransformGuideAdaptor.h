@@ -7,11 +7,12 @@
 #include <memory>
 #include <optional>
 #include <AIS_InteractiveContext.hxx>
-#include <AIS_InteractiveObject.hxx>
+#include <AIS_Shape.hxx>
 #include <gp_Pnt.hxx>
 #include <vector>
 
 #include "Controller/Interaction/TransformTypes.h"
+#include "Controller/Interaction/Gizmo/GizmoTypes.h"
 #include "Geometry/GeometryTypes.h"
 
 
@@ -21,12 +22,19 @@ struct TransformGuideState {
     std::optional<gp_Pnt> constraintPivot;
     TransformElementSpace::TransformMode mode{TransformElementSpace::TransformMode::Move};
     TransformElementSpace::TransformConstraint constraint{TransformElementSpace::TransformConstraint::Free};
+    std::optional<GizmoHandleId> hoveredGizmoHandleId;
+    std::optional<GizmoHandleId> activeGizmoHandleId;
     GeometryTypes::RTransform transform;
 };
 
 
 class TransformGuideAdaptor {
 public:
+    struct GuideObject {
+        Handle(AIS_Shape) object;
+        std::optional<GizmoHandleId> handleId;
+    };
+
     explicit TransformGuideAdaptor(const Handle(AIS_InteractiveContext) &context);
 
     void ShowTransformGuide(const std::shared_ptr<TransformGuideState> &transformGuideState);
@@ -46,10 +54,12 @@ private:
 
     void UpdateObjectTransforms(const TransformGuideState &state) const;
 
+    void UpdateObjectStyles(const TransformGuideState &state) const;
+
     void ClearObjects(bool updateViewer);
 
     Handle(AIS_InteractiveContext) m_Context;
-    std::vector<Handle(AIS_InteractiveObject)> m_MainGuideObjects;
-    std::vector<Handle(AIS_InteractiveObject)> m_ConstraintGuideObjects;
+    std::vector<GuideObject> m_MainGuideObjects;
+    std::vector<GuideObject> m_ConstraintGuideObjects;
     TopologyKey m_Topology;
 };

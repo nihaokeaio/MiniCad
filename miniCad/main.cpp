@@ -4,6 +4,7 @@
 #include "AppContext.h"
 #include "CadView.h"
 #include "UI/MainWindow.h"
+#include "Rendering/OpenGL/OpenGLViewport.h"
 
 int main(int argc,char *argv[])
 {
@@ -15,9 +16,10 @@ int main(int argc,char *argv[])
 
     auto* central =new QWidget();
     auto* layout =new QVBoxLayout();
-    auto *view = AppContext::Instance().GetCadView();
+    //auto *view = AppContext::Instance().GetCadView();
+    auto *glWidget = new OpenGLViewport();
 
-    layout->addWidget(view,1);
+    layout->addWidget(glWidget, 1);
     central->setLayout(layout);
     window.setCentralWidget(central);
     window.resize(1200,800);

@@ -6,7 +6,7 @@
 #include "Controller/Interaction/InteractionHandler.h"
 #include "Controller/Interaction/TransformTypes.h"
 #include "Controller/Command/TransformElementsCommand.h"
-#include "Utils/Types.h"
+#include "../../../Common/Types.h"
 
 #include <gp_Pln.hxx>
 #include <vector>

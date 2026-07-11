@@ -3,11 +3,13 @@
 //
 
 #pragma once
+#include <QElapsedTimer>
 #include <QOpenGLBuffer>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
 
+class MiniRenderShader;
 class QOpenGLShaderProgram;
 
 class OpenGLViewport : public QOpenGLWidget, protected QOpenGLFunctions {
@@ -28,9 +30,11 @@ private:
     void ReleaseTriangle();
 
 private:
-    QOpenGLShaderProgram *m_ShaderProgram = nullptr;
+    std::unique_ptr<MiniRenderShader> m_MiniRenderShader;
     QOpenGLBuffer m_VertexBuffer{QOpenGLBuffer::VertexBuffer};
     QOpenGLVertexArrayObject m_VertexArray;
+    QElapsedTimer m_ElapsedTimer;
+    float m_TimeStamp = 0.0f;
 };
 
 

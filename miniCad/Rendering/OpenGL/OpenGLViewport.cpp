@@ -5,9 +5,10 @@
 #include "OpenGLViewport.h"
 
 #include <QDebug>
-#include <QMatrix4x4>
+#include <QMouseEvent>
 #include <QOpenGLShaderProgram>
-#include <QVector3D>
+#include <QPainter>
+#include <QWheelEvent>
 
 #include "MiniRenderShader/MiniRenderShader.h"
 
@@ -83,7 +84,7 @@ void main()
 )";
 }
 
-OpenGLViewport::OpenGLViewport(QWidget *parent) : QOpenGLWidget(parent) {
+OpenGLViewport::OpenGLViewport(QWidget *parent) : QOpenGLWidget(parent), m_Camera(width(), height()) {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
 }
@@ -105,12 +106,17 @@ void OpenGLViewport::initializeGL() {
 
 void OpenGLViewport::resizeGL(int w, int h) {
     glViewport(0, 0, w, h);
+    m_Camera.Resize(w, h);
 }
 
 void OpenGLViewport::paintGL() {
+    UpdateFrameStats();
+
+    PrepareSceneRenderState();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!m_MiniRenderShader) {
+        DrawFrameStats();
         return;
     }
     const qint64 elapsedMs = m_ElapsedTimer.elapsed();
@@ -118,30 +124,52 @@ void OpenGLViewport::paintGL() {
 
     QMatrix4x4 model;
     model.setToIdentity();
-    model.rotate(elapsedSeconds * 45.0f, 0.0f, 1.0f, 0.0f);
-
-    QMatrix4x4 view;
-    view.lookAt(
-        QVector3D(0.0f, 0.0f, 3.0f),
-        QVector3D(0.0f, 0.0f, 0.0f),
-        QVector3D(0.0f, 1.0f, 0.0f));
-
-    QMatrix4x4 projection;
-    const float aspectRatio = height() > 0
-                                  ? static_cast<float>(width()) / static_cast<float>(height())
-                                  : 1.0f;
-    projection.perspective(45.0f, aspectRatio, 0.1f, 100.0f);
+    model.rotate(0 * 45.0f, 0.0f, 1.0f, 0.0f);
 
     m_MiniRenderShader->Active();
     m_VertexArray.bind();
     m_MiniRenderShader->GetShaderProgram()->setUniformValue("uModel", model);
-    m_MiniRenderShader->GetShaderProgram()->setUniformValue("uView", view);
-    m_MiniRenderShader->GetShaderProgram()->setUniformValue("uProjection", projection);
+    m_MiniRenderShader->GetShaderProgram()->setUniformValue("uView", m_Camera.ViewMatrix());
+    m_MiniRenderShader->GetShaderProgram()->setUniformValue("uProjection", m_Camera.ProjectionMatrix());
     //glDrawArrays(GL_TRIANGLES, 0, 3);
     glDrawElements(GL_TRIANGLES, std::size(CubeIndices), GL_UNSIGNED_INT, 0);
     m_VertexArray.release();
     m_MiniRenderShader->Release();
+    DrawFrameStats();
     update();
+}
+
+void OpenGLViewport::mousePressEvent(QMouseEvent *event) {
+    m_LastMousePosition = event->pos();
+    QOpenGLWidget::mousePressEvent(event);
+}
+
+void OpenGLViewport::mouseMoveEvent(QMouseEvent *event) {
+    const QPoint delta = event->pos() - m_LastMousePosition;
+    m_LastMousePosition = event->pos();
+
+    if (event->buttons() & Qt::MiddleButton) {
+        if (event->modifiers() & Qt::ShiftModifier) {
+            m_Camera.Pan(static_cast<float>(delta.x()), static_cast<float>(delta.y()));
+        } else {
+            m_Camera.Orbit(static_cast<float>(delta.x()), static_cast<float>(delta.y()));
+        }
+        update();
+        return;
+    }
+
+    QOpenGLWidget::mouseMoveEvent(event);
+}
+
+void OpenGLViewport::wheelEvent(QWheelEvent *event) {
+    const float wheelSteps = static_cast<float>(event->angleDelta().y()) / 120.0f;
+    if (wheelSteps != 0.0f) {
+        m_Camera.Zoom(wheelSteps);
+        update();
+        return;
+    }
+
+    QOpenGLWidget::wheelEvent(event);
 }
 
 void OpenGLViewport::InitVertexData() {
@@ -177,4 +205,47 @@ void OpenGLViewport::ReleaseVertexData() {
     m_VertexArray.destroy();
     m_VertexBuffer.destroy();
     m_IndexBuffer.destroy();
+}
+
+void OpenGLViewport::PrepareSceneRenderState() {
+    glViewport(0, 0, width(), height());
+    glDisable(GL_BLEND);
+    glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+    glClearDepthf(1.0f);
+}
+
+void OpenGLViewport::UpdateFrameStats() {
+    ++m_FrameCount;
+
+    const qint64 nowMs = m_ElapsedTimer.elapsed();
+    if (m_LastFpsSampleMs == 0) {
+        m_LastFpsSampleMs = nowMs;
+        return;
+    }
+
+    const qint64 elapsedMs = nowMs - m_LastFpsSampleMs;
+    if (elapsedMs < 500) {
+        return;
+    }
+
+    m_Fps = static_cast<float>(m_FrameCount) * 1000.0f / static_cast<float>(elapsedMs);
+    m_FrameTimeMs = static_cast<float>(elapsedMs) / static_cast<float>(m_FrameCount);
+    m_FrameCount = 0;
+    m_LastFpsSampleMs = nowMs;
+}
+
+void OpenGLViewport::DrawFrameStats() {
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    painter.setPen(QColor(230, 230, 230));
+    painter.drawText(
+        12,
+        24,
+        QString("FPS: %1  Frame: %2 ms")
+        .arg(m_Fps, 0, 'f', 1)
+        .arg(m_FrameTimeMs, 0, 'f', 2));
 }

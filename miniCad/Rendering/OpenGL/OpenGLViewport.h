@@ -26,12 +26,14 @@ protected:
     void paintGL() override;
 
 private:
-    void InitTriangle();
-    void ReleaseTriangle();
+    void InitVertexData();
+
+    void ReleaseVertexData();
 
 private:
     std::unique_ptr<MiniRenderShader> m_MiniRenderShader;
     QOpenGLBuffer m_VertexBuffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer m_IndexBuffer{QOpenGLBuffer::IndexBuffer};
     QOpenGLVertexArrayObject m_VertexArray;
     QElapsedTimer m_ElapsedTimer;
     float m_TimeStamp = 0.0f;

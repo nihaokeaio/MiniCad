@@ -5,27 +5,18 @@
 #include "OpenGLViewport.h"
 
 #include <QDebug>
+#include <QMatrix4x4>
 #include <QMouseEvent>
-#include <QOpenGLShaderProgram>
 #include <QPainter>
 #include <QWheelEvent>
 
-#include "MiniRenderShader/MiniRenderShader.h"
+#include "Mesh/MiniMesh.h"
+#include "Renderer/MiniRenderer.h"
+#include "RenderShader/MiniRenderShader.h"
 
 namespace {
-    struct Vertex {
-        float position[3];
-        float color[3];
-    };
-
-    constexpr Vertex TriangleVertices[] = {
-        {{-0.6f, -0.5f, 0.0f}, {1.0f, 0.1f, 0.1f}},
-        {{0.6f, -0.5f, 0.0f}, {0.1f, 1.0f, 0.1f}},
-        {{0.0f, 0.6f, 0.0f}, {0.1f, 0.35f, 1.0f}},
-    };
-
     // 立方体的8个顶点
-    constexpr Vertex CubeVertices[] = {
+    std::vector<Vertex> CubeVertices = {
         // 前面 (z = 0.5f)
         {{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}}, // 0: 红色
         {{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}, // 1: 绿色
@@ -40,7 +31,7 @@ namespace {
     };
 
     // 索引数组：12个三角形，每个三角形3个索引
-    constexpr unsigned int CubeIndices[] = {
+    std::vector<unsigned int> CubeIndices = {
         // 前面 (z = 0.5f)
         0, 1, 2,
         0, 2, 3,
@@ -60,28 +51,6 @@ namespace {
         4, 5, 1,
         4, 1, 0,
     };
-
-    constexpr const char *VertexShaderSource = R"(
-attribute vec3 aPosition;
-attribute vec3 aColor;
-
-varying vec3 vColor;
-
-void main()
-{
-    gl_Position = vec4(aPosition, 1.0);
-    vColor = aColor;
-}
-)";
-
-    constexpr const char *FragmentShaderSource = R"(
-varying vec3 vColor;
-
-void main()
-{
-    gl_FragColor = vec4(vColor, 1.0);
-}
-)";
 }
 
 OpenGLViewport::OpenGLViewport(QWidget *parent) : QOpenGLWidget(parent), m_Camera(width(), height()) {
@@ -91,7 +60,7 @@ OpenGLViewport::OpenGLViewport(QWidget *parent) : QOpenGLWidget(parent), m_Camer
 
 OpenGLViewport::~OpenGLViewport() {
     makeCurrent();
-    ReleaseVertexData();
+    m_Renderer.reset();
     doneCurrent();
 }
 
@@ -99,7 +68,7 @@ void OpenGLViewport::initializeGL() {
     initializeOpenGLFunctions();
     glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-    InitVertexData();
+    InitRenderer();
     qDebug() << "initializeGL done!";
     m_ElapsedTimer.start();
 }
@@ -115,26 +84,12 @@ void OpenGLViewport::paintGL() {
     PrepareSceneRenderState();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (!m_MiniRenderShader) {
+    if (!m_Renderer) {
         DrawFrameStats();
         return;
     }
-    const qint64 elapsedMs = m_ElapsedTimer.elapsed();
-    const float elapsedSeconds = static_cast<float>(elapsedMs) / 1000.0f;
 
-    QMatrix4x4 model;
-    model.setToIdentity();
-    model.rotate(0 * 45.0f, 0.0f, 1.0f, 0.0f);
-
-    m_MiniRenderShader->Active();
-    m_VertexArray.bind();
-    m_MiniRenderShader->GetShaderProgram()->setUniformValue("uModel", model);
-    m_MiniRenderShader->GetShaderProgram()->setUniformValue("uView", m_Camera.ViewMatrix());
-    m_MiniRenderShader->GetShaderProgram()->setUniformValue("uProjection", m_Camera.ProjectionMatrix());
-    //glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDrawElements(GL_TRIANGLES, std::size(CubeIndices), GL_UNSIGNED_INT, 0);
-    m_VertexArray.release();
-    m_MiniRenderShader->Release();
+    m_Renderer->Render(m_Camera);
     DrawFrameStats();
     update();
 }
@@ -172,39 +127,17 @@ void OpenGLViewport::wheelEvent(QWheelEvent *event) {
     QOpenGLWidget::wheelEvent(event);
 }
 
-void OpenGLViewport::InitVertexData() {
-    m_MiniRenderShader = std::make_unique<MiniRenderShader>(R""(D:/program/MyTinyCad/miniCad/Shader/Base.vert)"",
-                                                            R""(D:/program/MyTinyCad/miniCad/Shader/Base.frag)"");
+void OpenGLViewport::InitRenderer() {
+    m_Renderer = std::make_unique<MiniRenderer>();
 
-    m_VertexArray.create();
-    m_VertexArray.bind();
+    auto *shader = m_Renderer->AddShader(std::make_unique<MiniRenderShader>(
+        R""(D:/program/MyTinyCad/miniCad/Shader/Base.vert)"",
+        R""(D:/program/MyTinyCad/miniCad/Shader/Base.frag)""));
+    auto *mesh = m_Renderer->AddMesh(std::make_unique<MiniMesh>(CubeVertices, CubeIndices));
 
-    m_VertexBuffer.create();
-    m_VertexBuffer.bind();
-    m_VertexBuffer.allocate(CubeVertices, sizeof(CubeVertices));
-
-    m_IndexBuffer.create();
-    m_IndexBuffer.bind();
-    m_IndexBuffer.allocate(CubeIndices, sizeof(CubeIndices));
-
-    m_MiniRenderShader->Active();
-    const auto shaderProgram = m_MiniRenderShader->GetShaderProgram();
-    shaderProgram->setAttributeBuffer(0, GL_FLOAT, offsetof(Vertex, position), 3, sizeof(Vertex));
-    shaderProgram->enableAttributeArray(0);
-
-    shaderProgram->setAttributeBuffer(1, GL_FLOAT, offsetof(Vertex, color), 3, sizeof(Vertex));
-    shaderProgram->enableAttributeArray(1);
-
-    m_VertexBuffer.release();
-    m_VertexArray.release();
-    m_IndexBuffer.release();
-    m_MiniRenderShader->Release();
-}
-
-void OpenGLViewport::ReleaseVertexData() {
-    m_VertexArray.destroy();
-    m_VertexBuffer.destroy();
-    m_IndexBuffer.destroy();
+    QMatrix4x4 model;
+    model.setToIdentity();
+    m_Renderer->AddRenderItem(RenderItem{mesh, shader, model});
 }
 
 void OpenGLViewport::PrepareSceneRenderState() {

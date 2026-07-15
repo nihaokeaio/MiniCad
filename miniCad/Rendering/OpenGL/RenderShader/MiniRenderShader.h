@@ -13,6 +13,8 @@ public:
     //构造数据
     MiniRenderShader(const char *vertexFilePath, const char *fragmentFilePath);
 
+    ~MiniRenderShader();
+
     //使用（active）着色器
     void Active() const;
 

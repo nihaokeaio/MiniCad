@@ -22,6 +22,8 @@ MiniRenderShader::MiniRenderShader(const char *vertexFilePath, const char *fragm
     }
 }
 
+MiniRenderShader::~MiniRenderShader() = default;
+
 void MiniRenderShader::Active() const {
     m_ShaderProgram->bind();
 }

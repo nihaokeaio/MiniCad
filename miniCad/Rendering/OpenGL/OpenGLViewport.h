@@ -3,17 +3,16 @@
 //
 
 #pragma once
+#include <memory>
+
 #include <QElapsedTimer>
-#include <QOpenGLBuffer>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
-#include <QOpenGLVertexArrayObject>
 #include <QPoint>
 
 #include "Camera/MiniCamera.h"
 
-class MiniRenderShader;
-class QOpenGLShaderProgram;
+class MiniRenderer;
 
 class OpenGLViewport : public QOpenGLWidget, protected QOpenGLFunctions {
 public:
@@ -35,9 +34,7 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
-    void InitVertexData();
-
-    void ReleaseVertexData();
+    void InitRenderer();
 
     void PrepareSceneRenderState();
 
@@ -46,10 +43,7 @@ private:
     void DrawFrameStats();
 
 private:
-    std::unique_ptr<MiniRenderShader> m_MiniRenderShader;
-    QOpenGLBuffer m_VertexBuffer{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer m_IndexBuffer{QOpenGLBuffer::IndexBuffer};
-    QOpenGLVertexArrayObject m_VertexArray;
+    std::unique_ptr<MiniRenderer> m_Renderer;
     MiniCamera m_Camera;
     QPoint m_LastMousePosition;
     QElapsedTimer m_ElapsedTimer;

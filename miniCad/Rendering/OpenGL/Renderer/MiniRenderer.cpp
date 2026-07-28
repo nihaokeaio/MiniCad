@@ -10,69 +10,33 @@
 #include "OpenGL/Mesh/MiniMesh.h"
 #include "OpenGL/RenderShader/MiniRenderShader.h"
 
-MiniRenderer::~MiniRenderer() {
-    m_RenderItems.clear();
-    m_Meshes.clear();
-    m_Shaders.clear();
-}
 
-MiniRenderShader *MiniRenderer::AddShader(std::unique_ptr<MiniRenderShader> shader) {
-    if (shader == nullptr) {
-        return nullptr;
-    }
-
-    auto *rawShader = shader.get();
-    m_Shaders.push_back(std::move(shader));
-    return rawShader;
-}
-
-MiniMesh *MiniRenderer::AddMesh(std::unique_ptr<MiniMesh> mesh) {
-    if (mesh == nullptr) {
-        return nullptr;
-    }
-
-    auto *rawMesh = mesh.get();
-    m_Meshes.push_back(std::move(mesh));
-    return rawMesh;
-}
-
-void MiniRenderer::AddRenderItem(const RenderItem &item) {
-    if (item.mesh == nullptr || item.shader == nullptr) {
-        return;
-    }
-
-    m_RenderItems.push_back(item);
-}
-
-void MiniRenderer::ClearRenderItems() {
-    m_RenderItems.clear();
-}
-
-void MiniRenderer::Render(const MiniCamera &camera) const {
+void MiniRenderer::Render(const MiniCamera &camera, std::span<const RenderItem> items) {
     const QMatrix4x4 view = camera.ViewMatrix();
     const QMatrix4x4 projection = camera.ProjectionMatrix();
 
-    MiniRenderShader *activeShader = nullptr;
-    for (const auto &item: m_RenderItems) {
-        if (item.mesh == nullptr || item.shader == nullptr) {
+    const MiniRenderShader *activeShader = nullptr;
+    for (const auto &[mesh, shader, model]: items) {
+        if (mesh == nullptr || shader == nullptr) {
             continue;
         }
 
-        if (activeShader != item.shader) {
+        if (activeShader != shader) {
             if (activeShader != nullptr) {
                 activeShader->Release();
             }
 
-            activeShader = item.shader;
+            activeShader = shader;
             activeShader->Active();
             auto *shaderProgram = activeShader->GetShaderProgram();
             shaderProgram->setUniformValue("uView", view);
             shaderProgram->setUniformValue("uProjection", projection);
+            shaderProgram->setUniformValue("uBaseColor", Material::baseColor);
         }
 
         auto *shaderProgram = activeShader->GetShaderProgram();
-        shaderProgram->setUniformValue("uModel", item.model);
-        item.mesh->Draw();
+        shaderProgram->setUniformValue("uModel", model);
+        mesh->Draw();
     }
 
     if (activeShader != nullptr) {

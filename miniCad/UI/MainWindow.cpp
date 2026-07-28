@@ -34,6 +34,7 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     auto moveTool = toolbar->addAction("MoveTool");
     auto undo = toolbar->addAction("Undo");
     auto redo = toolbar->addAction("Redo");
+    auto addOpenGlBox = toolbar->addAction("newBox");
 
     QObject::connect(action, &QAction::triggered, m_Context->GetCadView(), &CadView::PrintSelection);
     QObject::connect(createBox, &QAction::triggered, this, [context]() {
@@ -80,6 +81,9 @@ MainWindow::MainWindow(AppContext *context) : m_Context(context) {
     });
     QObject::connect(redo, &QAction::triggered, this, [context]() {
         context->GetCadController()->Redo();
+    });
+    QObject::connect(addOpenGlBox, &QAction::triggered, this, [context]() {
+        context->GetCadController()->CreateElement(ElementType::Box);
     });
 }
 

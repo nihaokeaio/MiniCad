@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <QMatrix4x4>
+#include <span>
 
 class MiniCamera;
 class MiniMesh;
@@ -21,21 +22,5 @@ struct RenderItem {
 
 class MiniRenderer {
 public:
-    MiniRenderer() = default;
-    ~MiniRenderer();
-
-    MiniRenderShader *AddShader(std::unique_ptr<MiniRenderShader> shader);
-
-    MiniMesh *AddMesh(std::unique_ptr<MiniMesh> mesh);
-
-    void AddRenderItem(const RenderItem &item);
-
-    void ClearRenderItems();
-
-    void Render(const MiniCamera &camera) const;
-
-private:
-    std::vector<std::unique_ptr<MiniRenderShader>> m_Shaders;
-    std::vector<std::unique_ptr<MiniMesh>> m_Meshes;
-    std::vector<RenderItem> m_RenderItems;
+    static void Render(const MiniCamera &camera, std::span<const RenderItem> items);
 };

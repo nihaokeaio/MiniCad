@@ -10,16 +10,16 @@
 
 MiniCamera::MiniCamera(int width, int height) : m_Width(width), m_Height(height) {
     m_OrbitCamera = std::make_unique<OrbitCamera>();
-    m_OrbitCamera->pivot = QVector3D(0.0f, 0.0f, 0.0f);
-    m_OrbitCamera->distance = 3.0f;
+    m_OrbitCamera->pivot = QVector3D(0.0f, 0.0f, 50.0f);
+    m_OrbitCamera->distance = 200.0f;
     m_OrbitCamera->yaw = 35.0f;
     m_OrbitCamera->pitch = 25.0f;
     m_OrbitCamera->fovY = 45.0f;
     m_OrbitCamera->aspect = height > 0 ? static_cast<float>(width) / static_cast<float>(height) : 1.0f;
     m_OrbitCamera->nearPlane = 0.1f;
-    m_OrbitCamera->farPlane = 100.0f;
+    m_OrbitCamera->farPlane = 1000.0f;
     m_OrbitCamera->orthographic = true;
-    m_OrbitCamera->orthoHeight = 4.0f;
+    m_OrbitCamera->orthoHeight = 150.0f;
 }
 
 void MiniCamera::Resize(int width, int height) {

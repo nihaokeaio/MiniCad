@@ -17,7 +17,7 @@ int main(int argc,char *argv[])
     auto* central =new QWidget();
     auto* layout =new QVBoxLayout();
     //auto *view = AppContext::Instance().GetCadView();
-    auto *glWidget = new OpenGLViewport();
+    auto *glWidget = new OpenGLViewport(AppContext::Instance().GetScene());
 
     layout->addWidget(glWidget, 1);
     central->setLayout(layout);

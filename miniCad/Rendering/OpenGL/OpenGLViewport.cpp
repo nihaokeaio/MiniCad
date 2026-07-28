@@ -10,9 +10,11 @@
 #include <QPainter>
 #include <QWheelEvent>
 
+#include "OpenGLSceneRenderer.h"
 #include "Mesh/MiniMesh.h"
 #include "Renderer/MiniRenderer.h"
 #include "RenderShader/MiniRenderShader.h"
+#include "Scene/Scene.h"
 
 namespace {
     // 立方体的8个顶点
@@ -53,14 +55,15 @@ namespace {
     };
 }
 
-OpenGLViewport::OpenGLViewport(QWidget *parent) : QOpenGLWidget(parent), m_Camera(width(), height()) {
+OpenGLViewport::OpenGLViewport(Scene *scene, QWidget *parent) : QOpenGLWidget(parent), m_Camera(width(), height()),
+                                                                m_Scene(scene) {
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
 }
 
 OpenGLViewport::~OpenGLViewport() {
     makeCurrent();
-    m_Renderer.reset();
+    m_OpenGLSceneRenderer.reset();
     doneCurrent();
 }
 
@@ -84,12 +87,12 @@ void OpenGLViewport::paintGL() {
     PrepareSceneRenderState();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (!m_Renderer) {
+    if (!m_OpenGLSceneRenderer) {
         DrawFrameStats();
         return;
     }
-
-    m_Renderer->Render(m_Camera);
+    m_OpenGLSceneRenderer->Sync(m_Scene);
+    m_OpenGLSceneRenderer->Render(&m_Camera);
     DrawFrameStats();
     update();
 }
@@ -128,16 +131,8 @@ void OpenGLViewport::wheelEvent(QWheelEvent *event) {
 }
 
 void OpenGLViewport::InitRenderer() {
-    m_Renderer = std::make_unique<MiniRenderer>();
-
-    auto *shader = m_Renderer->AddShader(std::make_unique<MiniRenderShader>(
-        R""(D:/program/MyTinyCad/miniCad/Shader/Base.vert)"",
-        R""(D:/program/MyTinyCad/miniCad/Shader/Base.frag)""));
-    auto *mesh = m_Renderer->AddMesh(std::make_unique<MiniMesh>(CubeVertices, CubeIndices));
-
-    QMatrix4x4 model;
-    model.setToIdentity();
-    m_Renderer->AddRenderItem(RenderItem{mesh, shader, model});
+    m_OpenGLSceneRenderer = std::make_unique<OpenGLSceneRenderer>();
+    m_OpenGLSceneRenderer->Initialize();
 }
 
 void OpenGLViewport::PrepareSceneRenderState() {

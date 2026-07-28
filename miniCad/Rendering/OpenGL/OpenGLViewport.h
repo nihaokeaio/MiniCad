@@ -12,11 +12,13 @@
 
 #include "Camera/MiniCamera.h"
 
+class OpenGLSceneRenderer;
 class MiniRenderer;
+class Scene;
 
 class OpenGLViewport : public QOpenGLWidget, protected QOpenGLFunctions {
 public:
-    explicit OpenGLViewport(QWidget *parent = nullptr);
+    explicit OpenGLViewport(Scene *scene, QWidget *parent = nullptr);
 
     ~OpenGLViewport() override;
 
@@ -43,7 +45,7 @@ private:
     void DrawFrameStats();
 
 private:
-    std::unique_ptr<MiniRenderer> m_Renderer;
+    std::unique_ptr<OpenGLSceneRenderer> m_OpenGLSceneRenderer;
     MiniCamera m_Camera;
     QPoint m_LastMousePosition;
     QElapsedTimer m_ElapsedTimer;
@@ -51,4 +53,5 @@ private:
     int m_FrameCount = 0;
     float m_Fps = 0.0f;
     float m_FrameTimeMs = 0.0f;
+    Scene *m_Scene = nullptr;
 };

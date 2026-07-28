@@ -12,7 +12,11 @@
 
 struct Vertex {
     QVector3D position;
-    QVector3D color;
+    QVector3D normal;
+};
+
+struct Material {
+    inline static auto baseColor = QVector3D(1.0, 0.0, 1.0);
 };
 
 

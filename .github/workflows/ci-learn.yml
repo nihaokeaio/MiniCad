@@ -10,7 +10,6 @@ jobs:
           exit 1
 
   test:
-    needs: build
     runs-on: windows-latest
     steps:
       - name: Simulate tests

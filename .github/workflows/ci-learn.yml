@@ -1,8 +1,17 @@
 name: CI Learning
 on: push
 jobs:
-  hello:
+  build:
     runs-on: windows-latest
     steps:
-      - name: Print a message
-        run: Write-Output "Hello from GitHub Actions!"
+      - name: Simulate a build failure
+        run: |
+          Write-Output "Build started"
+          exit 1
+
+  test:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Simulate tests
+        run: Write-Output "Tests started"

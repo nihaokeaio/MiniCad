@@ -1,5 +1,7 @@
 name: CI Learning
+
 on: push
+
 jobs:
   build:
     runs-on: windows-latest
@@ -10,6 +12,7 @@ jobs:
           exit 1
 
   test:
+    needs: build
     runs-on: windows-latest
     steps:
       - name: Simulate tests

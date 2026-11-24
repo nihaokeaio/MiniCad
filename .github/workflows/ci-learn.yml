@@ -9,7 +9,7 @@ jobs:
       - name: Simulate a build failure
         run: |
           Write-Output "Build started"
-          exit 1
+          exit 0
 
   test:
     needs: build

@@ -1,4 +1,4 @@
-name: CI Learning
+name: My first C++ CI
 
 on: push
 

@@ -20,5 +20,9 @@ jobs:
       - name: Build
         run: cmake --build ci-learn/build --config Release --verbose
 
+      - name: Test
+        run:  ctest --test-dir ci-learn/build -C Release --output-on-failure --no-tests=error
+        
       - name: Run
         run: .\ci-learn\build\Release\ci_hello.exe
+

@@ -1,8 +1,9 @@
-﻿#include <iostream>
+#include <iostream>
+#include "add.h"
+
 
 int main()
 {
-    std::cout << "Hello from C++ CI!" << std::endl;
-    std::cout << "This is My First C++ CI Program!"<< std::endl;
+    std::cout << add(2, 3) << std::endl;
     return 0;
 }

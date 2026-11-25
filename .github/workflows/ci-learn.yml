@@ -26,3 +26,11 @@ jobs:
       - name: Run
         run: .\ci-learn\build\Release\ci_hello.exe
 
+      - name: Upload executable
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-hello-windows-x64
+          path: ci-learn/build/Release/ci-hello.exe
+          retention-days: 7
+          if-no-files-found: error
+

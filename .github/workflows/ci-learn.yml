@@ -2,18 +2,23 @@ name: CI Learning
 
 on: push
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
-      - name: Simulate a build failure
-        run: |
-          Write-Output "Build started"
-          exit 0
+      - name: Checkout source
+        uses: actions/checkout@v7
 
-  test:
-    needs: build
-    runs-on: windows-latest
-    steps:
-      - name: Simulate tests
-        run: Write-Output "Tests started"
+      - name: Configure
+        run: |
+          cmake --version
+          cmake -S ci-learn -B ci-learn/build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build ci-learn/build --config Release --verbose
+
+      - name: Run
+        run: .\ci-learn\build\Release\ci_hello.exe

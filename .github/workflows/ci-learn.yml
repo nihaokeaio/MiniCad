@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ci-hello-windows-x64
-          path: ci-learn/build/Release/ci-hello.exe
+          path: .\ci-learn\build\Release\ci_hello.exe
           retention-days: 7
           if-no-files-found: error
 

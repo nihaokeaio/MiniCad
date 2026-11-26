@@ -1,6 +1,11 @@
 name: My first C++ CI
 
-on: push
+on: 
+  push:
+    branches:
+      - ci-learning
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
@@ -42,7 +47,7 @@ jobs:
         with:
           name: ci-hello-windows-x64
           path: downloaded
-          
+
       - name: Run downlaoded executable
         run: .\downloaded\ci_hello.exe
 

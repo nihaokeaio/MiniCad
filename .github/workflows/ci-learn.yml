@@ -33,4 +33,17 @@ jobs:
           path: .\ci-learn\build\Release\ci_hello.exe
           retention-days: 7
           if-no-files-found: error
+  verify:
+    needs: build
+    runs-on: windows-2022
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v7
+        with:
+          name: ci-hello-windows-x64
+          path: downloaded
+          
+      - name: Run downlaoded executable
+        run: .\downloaded\ci_hello.exe
+
 

@@ -22,8 +22,43 @@ jobs:
           arch: 'win64_msvc2017_64'
           cache: 'true'
 
+      - name: Restore OCCT cache
+        id: occt_cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/occt-7.9.3
+          key: ${{ runner.os }}-${{ runner.arch }}-occt-7.9.3-combined-afbef345-v1
+
+      - name: Install OCCT
+        if: steps.occt_cache.outputs.cache-hit != 'true'
+        run: |
+          $zipFile = Join-Path $env:RUNNER_TEMP "occt.zip"
+          $packageRoot = Join-Path $env:RUNNER_TEMP "occt-7.9.3"
+
+          Invoke-WebRequest -Uri "https://github.com/Open-Cascade-SAS/OCCT/releases/download/V7_9_3/opencascade-7.9.3-vc14-64-combined.zip" -OutFile $zipFile
+
+          $expectedHash = "afbef3457fbc4a2bdca0608e0fe284392f51e4c2c42ccbfb9df7168d8e4eb9b3"
+          if ((Get-FileHash $zipFile -Algorithm SHA256).Hash -ne $expectedHash) {
+              throw "OCCT archive checksum mismatch"
+          }
+
+          Expand-Archive -Path $zipFile -DestinationPath $packageRoot
+
+      - name: Set up OCCT environment
+        run: |
+          $packageRoot = Join-Path $env:RUNNER_TEMP "occt-7.9.3"
+          $occtRoot = Join-Path $packageRoot "opencascade-7.9.3-vc14-64"
+
+          "OCCT_ROOT=$occtRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          @(
+              "$occtRoot/win64/vc14/bin"
+              "$packageRoot/3rdparty-vc14-64/tbb-2021.13.0-x64/bin"
+              "$packageRoot/3rdparty-vc14-64/jemalloc-vc14-64/bin"
+          ) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Configure
-        run: cmake -S qt-occt-learn -B qt-occt-learn/build-ci -G "Visual Studio 17 2022" -A x64 "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR"
+        run: cmake -S qt-occt-learn -B qt-occt-learn/build-ci -G "Visual Studio 17 2022" -A x64 "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR" "-DOpenCASCADE_DIR=$env:OCCT_ROOT/cmake"
 
       - name: Build
         run: cmake --build qt-occt-learn/build-ci --config Release

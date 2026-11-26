@@ -20,6 +20,7 @@ jobs:
         with:
           version: '5.12.5'
           arch: 'win64_msvc2017_64'
+          cache: 'true'
 
       - name: Configure
         run: cmake -S qt-occt-learn -B qt-occt-learn/build-ci -G "Visual Studio 17 2022" -A x64 "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR"

@@ -63,5 +63,8 @@ jobs:
       - name: Build
         run: cmake --build qt-occt-learn/build-ci --config Release
 
-      - name: Run
-        run: .\qt-occt-learn\build-ci\Release\qt_hello.exe
+      - name: GUI smoke test
+        timeout-minutes: 2
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: .\qt-occt-learn\build-ci\Release\qt_hello.exe --smoke-test

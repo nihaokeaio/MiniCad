@@ -50,5 +50,29 @@ jobs:
 
       - name: Run downlaoded executable
         run: .\downloaded\ci_hello.exe
+        
+  package:
+    needs: verify
+    if: github.ref_type == 'tag'
+    runs-on: windows-2022
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v7
+        with:
+          name: ci-hello-windows-x64
+          path: downloaded
+
+      - name: Create versioned ZIP
+        run: |
+          New-Item -ItemType Directory -Path package | Out-Null
+          Compress-Archive -Path downloaded/ci_hello.exe -DestinationPath "package/ci-hello-$env:GITHUB_REF_NAME-windows-x64.zip"
+
+      - name: Upload versioned package
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-hello-${{ github.ref_name }}-windows-x64
+          path: package/*.zip
+          retention-days: 7
+          if-no-files-found: error
 
 

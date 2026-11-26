@@ -1,0 +1,31 @@
+name: Qt Learning
+
+on:
+  push:
+    branches:
+      - ci-learning
+
+permissions:
+  contents: read
+
+jobs:
+  qt_build:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '5.12.5'
+          arch: 'win64_msvc2017_64'
+
+      - name: Configure
+        run: cmake -S qt-occt-learn -B qt-occt-learn/build-ci -G "Visual Studio 17 2022" -A x64 "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR"
+
+      - name: Build
+        run: cmake --build qt-occt-learn/build-ci --config Release
+
+      - name: Run
+        run: .\qt-occt-learn\build-ci\Release\qt_hello.exe

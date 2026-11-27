@@ -71,33 +71,11 @@ jobs:
         
       - name: Prepare deployment
         run: |
-          $deployDir = Join-Path $env:GITHUB_WORKSPACE "qt-occt-learn/dist-ci"
-          $packageRoot = Join-Path $env:RUNNER_TEMP "occt-7.9.3"
-
-          New-Item -ItemType Directory -Path $deployDir -Force | Out-Null
-          Copy-Item "qt-occt-learn/build-ci/Release/qt_hello.exe" $deployDir
-
-          & "$env:QT_ROOT_DIR/bin/windeployqt.exe" --release --no-translations --no-compiler-runtime "$deployDir/qt_hello.exe"
-          if ($LASTEXITCODE -ne 0) {
-              throw "windeployqt failed"
-          }
-
-          $runtimeFiles = @(
-              "$env:OCCT_ROOT/win64/vc14/bin/TKMath.dll"
-              "$env:OCCT_ROOT/win64/vc14/bin/TKernel.dll"
-              "$packageRoot/3rdparty-vc14-64/tbb-2021.13.0-x64/bin/tbb12.dll"
-              "$packageRoot/3rdparty-vc14-64/jemalloc-vc14-64/bin/jemalloc.dll"
-          )
-          Copy-Item -LiteralPath $runtimeFiles -Destination $deployDir
-
-          Copy-Item "$env:QT_ROOT_DIR/plugins/platforms/qoffscreen.dll" "$deployDir/platforms/"
-
-          @(
-              "Qt + OCCT learning demo"
-              "Requires Windows x64 and a compatible Microsoft Visual C++ v14 x64 Redistributable."
-              "Run: qt_hello.exe"
-              "Smoke check: qt_hello.exe --smoke-test"
-          ) | Set-Content -Path "$deployDir/README.txt" -Encoding utf8
+          ./scripts/deploy.ps1 `
+            -ExePath "qt-occt-learn/build-ci/Release/qt_hello.exe" `
+            -QtRoot "$env:QT_ROOT_DIR" `
+            -OcctPackRoot "$env:RUNNER_TEMP/occt-7.9.3" `
+            -OutputDir "qt-occt-learn/dist-ci"
 
       - name: Upload deployment
         uses: actions/upload-artifact@v7
